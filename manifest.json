@@ -1,0 +1,18 @@
+{
+  "name": "Lyra's Star Quest 🌟 Fact Fluency",
+  "short_name": "Lyra's Stars",
+  "description": "Magical math fact fluency practice for addition, subtraction, and multiplication.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#190b3b",
+  "theme_color": "#190b3b",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

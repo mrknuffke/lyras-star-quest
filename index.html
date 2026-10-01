@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Lyra's Star Quest 🌟 Fact Fluency</title>
+  <meta name="description" content="A magical, vibrant math fact fluency app for Lyra to master addition, subtraction, and multiplication in 5 fun minutes a day!">
+  
+  <!-- Web App Manifest & Apple PWA support for iPad -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#190b3b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lyra's Stars">
+  <link rel="apple-touch-icon" href="assets/icon.svg">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+
+  <!-- Google Fonts: Fredoka & Outfit for kid-friendly, playful yet ultra-clean typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body data-theme="nebula">
+  <!-- Dynamic Confetti Canvas for Celebrations & Easter Eggs -->
+  <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
+  <div class="app-container">
+    <!-- Top Navigation & Stats Bar -->
+    <header class="app-header">
+      <div class="header-left">
+        <!-- Interactive Mascot: Nova -->
+        <button id="mascotBtn" class="mascot-button" aria-label="Nova the star mascot" title="Tap Nova for fun!">
+          <div class="mascot-svg-wrapper" id="mascotWrapper">
+            <svg class="mascot-svg" viewBox="0 0 100 100" width="48" height="48">
+              <path class="mascot-star" d="M 50,5 L 61,35 L 95,35 L 67,55 L 78,88 L 50,68 L 22,88 L 33,55 L 5,35 L 39,35 Z" fill="#ffd100" stroke="#fff" stroke-width="3" />
+              <!-- Normal Eyes -->
+              <g class="mascot-eyes normal-eyes">
+                <circle cx="41" cy="45" r="4.5" fill="#1c0f38" />
+                <circle cx="40" cy="43.5" r="1.5" fill="#ffffff" />
+                <circle cx="59" cy="45" r="4.5" fill="#1c0f38" />
+                <circle cx="58" cy="43.5" r="1.5" fill="#ffffff" />
+                <!-- Blushing Cheeks -->
+                <ellipse cx="34" cy="51" rx="4" ry="2.5" fill="#ff4d8d" opacity="0.6" />
+                <ellipse cx="66" cy="51" rx="4" ry="2.5" fill="#ff4d8d" opacity="0.6" />
+                <!-- Happy Smile -->
+                <path class="mascot-mouth" d="M 45,51 Q 50,57 55,51" fill="none" stroke="#1c0f38" stroke-width="2.5" stroke-linecap="round" />
+              </g>
+              <!-- Party Sunglasses (hidden by default) -->
+              <g class="mascot-sunglasses hidden" id="partyGlasses">
+                <polygon points="32,41 49,41 46,50 35,50" fill="#0c0024" stroke="#ff007f" stroke-width="1.5"/>
+                <polygon points="51,41 68,41 65,50 54,50" fill="#0c0024" stroke="#00f5d4" stroke-width="1.5"/>
+                <line x1="47" y1="44" x2="53" y2="44" stroke="#fff" stroke-width="2" />
+              </g>
+            </svg>
+          </div>
+          <span class="mascot-speech" id="mascotSpeech">Hi Lyra! Ready to shine? ✨</span>
+        </button>
+
+        <div class="app-branding">
+          <h1 class="app-title">Lyra's <span class="gradient-text">Star Quest</span></h1>
+        </div>
+      </div>
+
+      <!-- Live Gamification Counters -->
+      <div class="header-stats">
+        <!-- Streak Counter -->
+        <div class="stat-pill streak-pill" title="Daily Practice Streak!">
+          <span class="stat-icon">🔥</span>
+          <span class="stat-value" id="streakCount">1</span>
+          <span class="stat-label">Day</span>
+        </div>
+
+        <!-- Star Stars Earned Today -->
+        <div class="stat-pill stars-pill" title="Stars collected today">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-value" id="starsEarned">0</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="header-actions">
+          <!-- Constellation Map Modal Trigger -->
+          <button id="constellationBtn" class="icon-btn" title="View Sky Constellation" aria-label="Constellation map">
+            🌌
+          </button>
+          <!-- Theme Switcher -->
+          <button id="themeToggleBtn" class="icon-btn" title="Change Cosmic Theme" aria-label="Switch theme">
+            🎨
+          </button>
+          <!-- Sound Toggle -->
+          <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound" aria-label="Toggle sound">
+            🔊
+          </button>
+          <!-- Parent / Teacher Settings -->
+          <button id="settingsBtn" class="icon-btn" title="Math Settings" aria-label="Open settings">
+            ⚙️
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Navigation Tabs: Daily Quest vs Practice Lab -->
+    <nav class="mode-tabs">
+      <button class="mode-tab active" id="tabDailyQuest" data-mode="daily">
+        <span class="tab-emoji">🚀</span>
+        <span class="tab-text">Daily 5-Min Quest</span>
+      </button>
+      <button class="mode-tab" id="tabPracticeLab" data-mode="lab">
+        <span class="tab-emoji">🧪</span>
+        <span class="tab-text">Practice Lab</span>
+      </button>
+    </nav>
+
+    <!-- Sub-bar for Daily Quest Timer & Progress -->
+    <section class="quest-status-card" id="questStatusCard">
+      <div class="timer-section">
+        <div class="timer-ring-container">
+          <svg class="timer-ring-svg" width="56" height="56" viewBox="0 0 56 56">
+            <circle class="timer-ring-bg" cx="28" cy="28" r="23" />
+            <circle class="timer-ring-progress" id="timerProgressRing" cx="28" cy="28" r="23" />
+          </svg>
+          <span class="timer-text" id="questTimer">05:00</span>
+        </div>
+        <div class="timer-labels">
+          <span class="timer-title" id="timerTitle">Daily Goal: 5 Minutes</span>
+          <span class="timer-sub" id="timerSub">You got this, star explorer!</span>
+        </div>
+      </div>
+
+      <div class="quest-controls">
+        <button id="pausePlayBtn" class="pill-btn secondary-btn" aria-label="Pause or Resume Timer">
+          <span id="pauseIcon">⏸️</span> <span id="pauseText">Pause</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Practice Lab Filter Bar (visible only in Lab mode) -->
+    <section class="lab-filter-bar hidden" id="labFilterBar">
+      <div class="filter-group">
+        <span class="filter-label">Operation:</span>
+        <div class="filter-chips" id="labOpChips">
+          <button class="chip active" data-op="mixed">Mixed 🎲</button>
+          <button class="chip" data-op="add">Addition ➕</button>
+          <button class="chip" data-op="sub">Subtraction ➖</button>
+          <button class="chip" data-op="mul">Multiplication ✖️</button>
+        </div>
+      </div>
+      <div class="filter-group hidden" id="labMulTableGroup">
+        <span class="filter-label">Table:</span>
+        <select id="labTableSelect" class="styled-select">
+          <option value="all">All Tables (0-10)</option>
+          <option value="0">0s & 1s</option>
+          <option value="2">2s Table</option>
+          <option value="3">3s Table</option>
+          <option value="4">4s Table</option>
+          <option value="5">5s Table</option>
+          <option value="6">6s Table</option>
+          <option value="7">7s Table</option>
+          <option value="8">8s Table</option>
+          <option value="9">9s Table</option>
+          <option value="10">10s Table</option>
+          <option value="11">11s Table</option>
+          <option value="12">12s Table</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Main Game Play Area -->
+    <main class="game-board">
+      <!-- Challenge Card -->
+      <div class="challenge-card" id="challengeCard">
+        <!-- Floating sparkle accents -->
+        <span class="star-sparkle sparkle-1">✦</span>
+        <span class="star-sparkle sparkle-2">★</span>
+        <span class="star-sparkle sparkle-3">✧</span>
+
+        <!-- Operation Badge -->
+        <div class="op-badge" id="opBadge">
+          <span id="opBadgeIcon">✖️</span>
+          <span id="opBadgeText">Multiplication</span>
+        </div>
+
+        <!-- The Math Problem Equation -->
+        <div class="equation-row" id="equationRow">
+          <span class="math-num" id="firstNum">7</span>
+          <span class="math-operator" id="mathOp">×</span>
+          <span class="math-num" id="secondNum">8</span>
+          <span class="math-equals">=</span>
+          <!-- Dynamic Answer Input Slot -->
+          <div class="answer-slot" id="answerSlot" tabindex="0" role="textbox" aria-label="Type your answer here">
+            <span class="answer-text" id="answerText"></span>
+            <span class="blinking-cursor"></span>
+          </div>
+        </div>
+
+        <!-- Feedback & Encouragement Banner -->
+        <div class="feedback-banner" id="feedbackBanner" aria-live="polite"></div>
+
+        <!-- Quick Help Bar -->
+        <div class="help-bar">
+          <button id="helpBtn" class="help-trigger-btn" aria-label="Show visual help and hints">
+            <span class="help-icon">💡</span>
+            <span class="help-text">Show Me! (Help)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tactile Virtual Keypad (for iPad touch & mouse clicks) -->
+      <div class="keypad-container" id="keypad">
+        <button class="key-btn" data-key="1">1</button>
+        <button class="key-btn" data-key="2">2</button>
+        <button class="key-btn" data-key="3">3</button>
+        <button class="key-btn" data-key="4">4</button>
+        <button class="key-btn" data-key="5">5</button>
+        <button class="key-btn" data-key="6">6</button>
+        <button class="key-btn" data-key="7">7</button>
+        <button class="key-btn" data-key="8">8</button>
+        <button class="key-btn" data-key="9">9</button>
+        <button class="key-btn action-key backspace-key" data-key="Backspace" aria-label="Backspace">
+          <span>⌫</span>
+        </button>
+        <button class="key-btn" data-key="0">0</button>
+        <button class="key-btn action-key enter-key" data-key="Enter" aria-label="Submit Answer">
+          <span>GO ✓</span>
+        </button>
+      </div>
+
+      <!-- Keyboard shortcut hint for desktop users -->
+      <p class="desktop-hint">💡 Tip: On a keyboard, use the number keys and press <kbd>Enter</kbd> (or <kbd>H</kbd> for help!)</p>
+    </main>
+
+    <!-- Celebration Screen (Overlay when 5-min Daily Quest completes!) -->
+    <div class="modal-backdrop hidden" id="celebrationModal" role="dialog" aria-modal="true">
+      <div class="modal-card celebration-card">
+        <div class="celebration-mascot-jump">🌟</div>
+        <h2 class="celebration-title">You Did It, Lyra! 🎉</h2>
+        <p class="celebration-subtitle">You completed your 5-minute math quest for today!</p>
+        
+        <div class="celebration-stats-grid">
+          <div class="celeb-stat-box">
+            <span class="celeb-stat-num" id="celebSolved">24</span>
+            <span class="celeb-stat-lbl">Facts Solved</span>
+          </div>
+          <div class="celeb-stat-box">
+            <span class="celeb-stat-num" id="celebAccuracy">96%</span>
+            <span class="celeb-stat-lbl">Accuracy</span>
+          </div>
+          <div class="celeb-stat-box">
+            <span class="celeb-stat-num" id="celebStreak">🔥 2</span>
+            <span class="celeb-stat-lbl">Day Streak</span>
+          </div>
+        </div>
+
+        <div class="constellation-reward-preview">
+          <p>✨ A new star has been added to your Sky Constellation!</p>
+        </div>
+
+        <div class="celebration-actions">
+          <button id="viewConstellationFromCelebBtn" class="pill-btn primary-btn">
+            🌌 View My Constellation
+          </button>
+          <button id="keepPracticingBtn" class="pill-btn secondary-btn">
+            🚀 Keep Practicing (Free Play)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Modal: Visual Manipulatives (Ten-Frames, Dot Arrays, Number-Sense Tricks) -->
+    <div class="modal-backdrop hidden" id="helpModal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="modal-card help-card">
+        <div class="modal-header">
+          <h3 id="helpTitle">✨ Let's Break It Down!</h3>
+          <button class="modal-close-btn" id="closeHelpBtn" aria-label="Close help">✕</button>
+        </div>
+
+        <div class="help-content-body" id="helpContentBody">
+          <!-- Dynamically populated visual array or ten-frame -->
+        </div>
+
+        <div class="modal-footer">
+          <button class="pill-btn primary-btn" id="gotItHelpBtn">I Got It! Let's Try 💫</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Constellation Sky Modal -->
+    <div class="modal-backdrop hidden" id="constellationModal" role="dialog" aria-modal="true">
+      <div class="modal-card constellation-card">
+        <div class="modal-header">
+          <h3>🌌 Lyra's Night Sky Constellation</h3>
+          <button class="modal-close-btn" id="closeConstellationBtn" aria-label="Close constellation">✕</button>
+        </div>
+        <p class="constellation-intro">Every day you practice for 5 minutes, a new star glows in your sky map!</p>
+        
+        <div class="constellation-sky-container">
+          <canvas id="constellationCanvas" width="480" height="300"></canvas>
+        </div>
+
+        <div class="constellation-footer-info">
+          <span id="constellationDaysCount">3 of 30 Stars Lit</span>
+          <span class="constellation-badge" id="currentRankBadge">🌟 Starlight Apprentice</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parent / Teacher Settings Modal -->
+    <div class="modal-backdrop hidden" id="settingsModal" role="dialog" aria-modal="true">
+      <div class="modal-card settings-card">
+        <div class="modal-header">
+          <h3>⚙️ Practice Settings</h3>
+          <button class="modal-close-btn" id="closeSettingsBtn" aria-label="Close settings">✕</button>
+        </div>
+        
+        <div class="settings-body">
+          <div class="setting-row">
+            <label for="dailyMinutesSelect">Daily Quest Duration:</label>
+            <select id="dailyMinutesSelect" class="styled-select">
+              <option value="3">3 Minutes (Speed Run)</option>
+              <option value="5" selected>5 Minutes (Recommended)</option>
+              <option value="10">10 Minutes (Power Math)</option>
+            </select>
+          </div>
+
+          <div class="setting-section-title">Operations in Daily Quest:</div>
+          <div class="checkbox-group">
+            <label class="custom-checkbox">
+              <input type="checkbox" id="settingOpAdd" checked>
+              <span class="checkmark"></span>
+              Addition (+)
+            </label>
+            <label class="custom-checkbox">
+              <input type="checkbox" id="settingOpSub" checked>
+              <span class="checkmark"></span>
+              Subtraction (−)
+            </label>
+            <label class="custom-checkbox">
+              <input type="checkbox" id="settingOpMul" checked>
+              <span class="checkmark"></span>
+              Multiplication (×)
+            </label>
+          </div>
+
+          <div class="setting-section-title">Multiplication Tables Focus:</div>
+          <div class="table-toggles-grid" id="settingsTableGrid">
+            <!-- 0 to 12 buttons generated by JS -->
+          </div>
+
+          <div class="setting-section-title">Addition & Subtraction Range:</div>
+          <div class="setting-row">
+            <label for="addMaxSum">Maximum Sum:</label>
+            <select id="addMaxSum" class="styled-select">
+              <option value="10">Within 10 (Early math)</option>
+              <option value="20" selected>Within 20 (Grade 2-3 standard)</option>
+              <option value="50">Within 50 (Challenge)</option>
+              <option value="100">Within 100 (Master)</option>
+            </select>
+          </div>
+
+          <div class="setting-section-title">Data & Progress:</div>
+          <div class="danger-zone">
+            <button id="resetTodayBtn" class="pill-btn danger-outline-btn">Reset Today's Timer</button>
+            <button id="resetAllDataBtn" class="pill-btn danger-btn">Reset All Progress</button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="pill-btn primary-btn" id="saveSettingsBtn">Save & Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio, Math Engine, Easter Eggs, and App Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/math-engine.js"></script>
+  <script src="js/easter-eggs.js"></script>
+  <script src="js/app.js"></script>
+
+  <!-- PWA Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => {
+          console.log('SW registration note:', err);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
