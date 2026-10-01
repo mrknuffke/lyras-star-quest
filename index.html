@@ -18,11 +18,11 @@
   <!-- Google Fonts: Fredoka & Outfit for kid-friendly, playful typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Press+Start+2P&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/styles.css">
 </head>
-<body data-theme="unicorn">
+<body data-theme="arcade">
   <!-- Dynamic Confetti & Creature Canvas -->
   <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
 
@@ -33,6 +33,8 @@
         <!-- Interactive Mascot: Tap to cycle hats / play silly sounds! -->
         <button id="mascotBtn" class="mascot-button" aria-label="Math buddy mascot" title="Tap your buddy for silly surprises!">
           <div class="mascot-svg-wrapper" id="mascotWrapper">
+            <!-- Emoji mascot for squad members without an SVG costume (Derpy, Brainy, Luna, Pixel) -->
+            <span class="mascot-emoji hidden" id="mascotEmoji" aria-hidden="true">🐯</span>
             <svg class="mascot-svg" id="mascotSvg" viewBox="0 0 100 100" width="52" height="52">
               <!-- Star Body (Nova) -->
               <path class="mascot-body-star" id="mascotStarBody" d="M 50,7 L 61,35 L 93,35 L 67,55 L 77,87 L 50,68 L 23,87 L 33,55 L 7,35 L 39,35 Z" fill="#ffd100" stroke="#fff" stroke-width="3" />
@@ -88,13 +90,13 @@
               </defs>
             </svg>
           </div>
-          <span class="mascot-speech" id="mascotSpeech">Hi Lyra! I believe in you! 🦄✨</span>
+          <span class="mascot-speech" id="mascotSpeech">Player 1 ready? Let's GO, Lyra! 🎮</span>
         </button>
 
         <div class="app-branding">
           <h1 class="app-title">Lyra's <span class="gradient-text">Star Quest</span></h1>
           <button id="buddySwitchBtn" class="buddy-switch-pill" title="Switch your buddy!">
-            <span id="currentBuddyEmoji">🦄</span> <span id="currentBuddyName">Celeste</span> ▾
+            <span id="currentBuddyEmoji">🐯</span> <span id="currentBuddyName">Derpy</span> ▾
           </button>
         </div>
       </div>
@@ -109,9 +111,10 @@
         </div>
 
         <!-- Star Stars Earned Today -->
-        <div class="stat-pill stars-pill" title="Stars collected today">
+        <div class="stat-pill stars-pill" title="XP earned today">
           <span class="stat-icon">⭐</span>
           <span class="stat-value" id="starsEarned">0</span>
+          <span class="stat-label">XP</span>
         </div>
 
         <!-- Fact Mastery Garden (Leitner System Counter) -->
@@ -126,10 +129,10 @@
           <button id="constellationBtn" class="icon-btn" title="View Sky Constellation" aria-label="Constellation map">
             🌌
           </button>
-          <button id="badgeGalleryBtn" class="icon-btn" title="My Badge Gallery" aria-label="Badge gallery">
+          <button id="badgeGalleryBtn" class="icon-btn" title="My Trophy Room" aria-label="Trophy room">
             🏅
           </button>
-          <button id="themeToggleBtn" class="icon-btn" title="Change Theme (Unicorn, Cat, Nebula, Candy)" aria-label="Switch theme">
+          <button id="themeToggleBtn" class="icon-btn" title="Change Theme (Arcade, Unicorn, Cat, Nebula, Candy)" aria-label="Switch theme">
             🎨
           </button>
           <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound" aria-label="Toggle sound">
@@ -160,18 +163,39 @@
       </div>
     </section>
 
-    <!-- Sticky Difficulty Quick Presets Bar: Easy, Medium, Challenge -->
+    <!-- Times-Table Drill: pick one table to practice (only in Just Multiplying mode) -->
+    <section class="table-drill-bar hidden" id="tableDrillBar" aria-label="Pick a times table to drill">
+      <span class="difficulty-label">🎯 Drill:</span>
+      <div class="table-drill-group" id="tableDrillGroup">
+        <button class="drill-btn active" data-table="all">All</button>
+        <button class="drill-btn" data-table="0">0</button>
+        <button class="drill-btn" data-table="1">1</button>
+        <button class="drill-btn" data-table="2">2</button>
+        <button class="drill-btn" data-table="3">3</button>
+        <button class="drill-btn" data-table="4">4</button>
+        <button class="drill-btn" data-table="5">5</button>
+        <button class="drill-btn" data-table="6">6</button>
+        <button class="drill-btn" data-table="7">7</button>
+        <button class="drill-btn" data-table="8">8</button>
+        <button class="drill-btn" data-table="9">9</button>
+        <button class="drill-btn" data-table="10">10</button>
+        <button class="drill-btn" data-table="11">11</button>
+        <button class="drill-btn" data-table="12">12</button>
+      </div>
+    </section>
+
+    <!-- Sticky Difficulty Quick Presets Bar: Easy, Normal, Boss Mode -->
     <section class="difficulty-bar" aria-label="Select difficulty level">
       <span class="difficulty-label">Level:</span>
       <div class="difficulty-group" id="quickDifficultyGroup">
-        <button class="diff-btn" data-diff="gentle" title="Warm-up / Easy (within 10, foundational tables)">
-          🐣 Gentle
+        <button class="diff-btn" data-diff="gentle" title="Easy Mode (within 10, foundational tables)">
+          🐣 Easy
         </button>
-        <button class="diff-btn active" data-diff="medium" title="Standard 3rd Grade (within 20, tables 0-10)">
-          🌟 Just Right
+        <button class="diff-btn active" data-diff="medium" title="Normal (Grade 3 standard: within 20, tables 0-10)">
+          🎮 Normal
         </button>
-        <button class="diff-btn" data-diff="challenge" title="Super Math Wizard (sums to 100, tables to 12)">
-          🚀 Challenge
+        <button class="diff-btn" data-diff="challenge" title="Boss Mode (sums to 100, tables to 12)">
+          👾 Boss Mode
         </button>
       </div>
     </section>
@@ -187,8 +211,8 @@
           <span class="timer-text" id="questTimer">05:00</span>
         </div>
         <div class="timer-labels">
-          <span class="timer-title" id="timerTitle">Daily Goal: 5 Minutes</span>
-          <span class="timer-sub" id="timerSub">You got this, star explorer!</span>
+          <span class="timer-title" id="timerTitle">Daily Quest: 5 Minutes</span>
+          <span class="timer-sub" id="timerSub">Player 1, you got this! 🎮</span>
         </div>
       </div>
 
@@ -204,15 +228,15 @@
       <!-- Challenge Card -->
       <div class="challenge-card" id="challengeCard">
         <!-- Floating sparkle & creature accents -->
-        <span class="star-sparkle sparkle-1">🦄</span>
+        <span class="star-sparkle sparkle-1">🎮</span>
         <span class="star-sparkle sparkle-2">★</span>
-        <span class="star-sparkle sparkle-3">🐱</span>
+        <span class="star-sparkle sparkle-3">👾</span>
 
         <!-- Operation Badge with Leitner Box status -->
         <div class="op-badge" id="opBadge">
           <span id="opBadgeIcon">✖️</span>
           <span id="opBadgeText">Multiplication</span>
-          <span id="leitnerBoxBadge" class="leitner-box-indicator">🌱 Learning</span>
+          <span id="leitnerBoxBadge" class="leitner-box-indicator">🌱 Lv.1 Learning</span>
         </div>
 
         <!-- The Math Problem Equation -->
@@ -235,7 +259,7 @@
         <div class="help-bar">
           <button id="helpBtn" class="help-trigger-btn" aria-label="Show visual help and hints">
             <span class="help-icon">💡</span>
-            <span class="help-text">Show Me! (Help)</span>
+            <span class="help-text">Show Me! (Hint)</span>
           </button>
         </div>
       </div>
@@ -267,9 +291,9 @@
     <!-- Celebration Screen (Overlay when 5-min Daily Quest completes!) -->
     <div class="modal-backdrop hidden" id="celebrationModal" role="dialog" aria-modal="true">
       <div class="modal-card celebration-card">
-        <div class="celebration-mascot-jump">🦄🎉🐱</div>
-        <h2 class="celebration-title">You Did It, Lyra! 🎉</h2>
-        <p class="celebration-subtitle" id="celebSubtitle">You completed your 5-minute math quest for today!</p>
+        <div class="celebration-mascot-jump" id="celebMascots">🐯🏆🎮</div>
+        <h2 class="celebration-title">QUEST CLEARED, LYRA! 🏆</h2>
+        <p class="celebration-subtitle" id="celebSubtitle">You beat today's 5-minute math quest!</p>
 
         <!-- Today's one-of-a-kind Quest Badge with full report -->
         <div class="badge-frame">
@@ -277,7 +301,7 @@
         </div>
 
         <div class="constellation-reward-preview">
-          <p>✨ A new star has been added to your Sky Constellation!</p>
+          <p>✨ Level complete! A new star lit up on your Sky Map!</p>
         </div>
 
         <div class="celebration-actions">
@@ -285,10 +309,10 @@
             💾 Save My Badge
           </button>
           <button id="viewConstellationFromCelebBtn" class="pill-btn secondary-btn">
-            🌌 View My Constellation
+            🌌 See My Sky Map
           </button>
           <button id="keepPracticingBtn" class="pill-btn secondary-btn">
-            🚀 Keep Playing & Practicing
+            🎮 Bonus Round: Keep Playing!
           </button>
         </div>
       </div>
@@ -305,7 +329,7 @@
         <div class="help-content-body" id="helpContentBody"></div>
 
         <div class="modal-footer">
-          <button class="pill-btn primary-btn" id="gotItHelpBtn">I Got It! Let's Try 💫</button>
+          <button class="pill-btn primary-btn" id="gotItHelpBtn">Got It! Respawn & Try! 🎮</button>
         </div>
       </div>
     </div>
@@ -367,13 +391,13 @@
     <div class="modal-backdrop hidden" id="galleryModal" role="dialog" aria-modal="true">
       <div class="modal-card gallery-card">
         <div class="modal-header">
-          <h3 id="galleryTitle">🏅 Lyra's Badge Gallery</h3>
-          <button class="modal-close-btn" id="closeGalleryBtn" aria-label="Close badge gallery">✕</button>
+          <h3 id="galleryTitle">🏅 Lyra's Trophy Room</h3>
+          <button class="modal-close-btn" id="closeGalleryBtn" aria-label="Close trophy room">✕</button>
         </div>
 
         <!-- Grid of all badges -->
         <div id="galleryGridView">
-          <p class="constellation-intro" id="galleryIntro">Every quest you finish adds a shiny new badge here!</p>
+          <p class="constellation-intro" id="galleryIntro">Every quest you clear adds a new badge to your Trophy Room!</p>
           <div class="gallery-grid" id="galleryGrid"></div>
         </div>
 
@@ -384,7 +408,7 @@
           </div>
           <div class="celebration-actions">
             <button id="gallerySaveBtn" class="pill-btn primary-btn">💾 Save This Badge</button>
-            <button id="galleryBackBtn" class="pill-btn secondary-btn">← Back to All Badges</button>
+            <button id="galleryBackBtn" class="pill-btn secondary-btn">← Back to Trophy Room</button>
           </div>
         </div>
       </div>
@@ -402,9 +426,9 @@
           <div class="setting-section-title">Difficulty Level (Sticky):</div>
           <div class="setting-row">
             <select id="modalDifficultySelect" class="styled-select" style="width: 100%;">
-              <option value="gentle">🐣 Gentle / Warm-up (within 10, basic tables)</option>
-              <option value="medium" selected>🌟 Just Right (Grade 3 standard: within 20, tables 0-10)</option>
-              <option value="challenge">🚀 Challenge / Wizard (within 100, tables 0-12)</option>
+              <option value="gentle">🐣 Easy Mode (within 10, basic tables)</option>
+              <option value="medium" selected>🎮 Normal (Grade 3 standard: within 20, tables 0-10)</option>
+              <option value="challenge">👾 Boss Mode (within 100, tables 0-12)</option>
               <option value="custom">🛠️ Custom (Use checkboxes below)</option>
             </select>
           </div>
@@ -412,6 +436,10 @@
           <div class="setting-section-title">Choose Lyra's Buddy:</div>
           <div class="setting-row">
             <select id="modalBuddySelect" class="styled-select" style="width: 100%;">
+              <option value="derpy">🐯 Derpy the Goofy Tiger</option>
+              <option value="zombie">🧟‍♀️ Brainy the Friendly Zombie</option>
+              <option value="vampire">🧛‍♀️ Luna the Vampire Girl</option>
+              <option value="pixel">👾 Pixel the Arcade Alien</option>
               <option value="unicorn">🦄 Celeste the Magical Unicorn</option>
               <option value="cat">🐱 Barnaby the Space Cat</option>
               <option value="caticorn">🌈 Sparkle the Caticorn (Cat + Unicorn!)</option>

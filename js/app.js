@@ -20,17 +20,22 @@ class StarQuestApp {
     this.remainingSeconds = 300;
     this.questCompletedToday = false;
 
-    // Buddies
+    // Buddies (Lyra's squad). svg: true buddies wear costumes on the star mascot;
+    // the rest show as a big emoji mascot. arraySymbol fills the Show Me! arrays.
     this.buddies = [
-      { id: 'unicorn', name: 'Celeste', emoji: '🦄', speech: 'Hi Lyra! Magical math time! 🦄✨' },
-      { id: 'cat', name: 'Barnaby', emoji: '🐱', speech: 'Meow Lyra! Paws ready for math! 🐾' },
-      { id: 'caticorn', name: 'Sparkle', emoji: '🌈', speech: 'Caticorn power activated! 🌈🐱' },
-      { id: 'star', name: 'Nova', emoji: '⭐', speech: 'Ready to shine bright, Lyra! ⭐' }
+      { id: 'derpy', name: 'Derpy', emoji: '🐯', arraySymbol: '🐯', speech: 'Rawr! Derpy is ready to game, Lyra! 🐯🎮' },
+      { id: 'zombie', name: 'Brainy', emoji: '🧟‍♀️', arraySymbol: '🧠', speech: 'Braaains... I mean, brain STRETCHES! Let\'s go! 🧟‍♀️' },
+      { id: 'vampire', name: 'Luna', emoji: '🧛‍♀️', arraySymbol: '🦇', speech: 'Hi Lyra! Luna the vampire girl is ready to count! 🦇💜' },
+      { id: 'pixel', name: 'Pixel', emoji: '👾', arraySymbol: '👾', speech: 'Beep boop! Player 1 has entered the game! 👾' },
+      { id: 'unicorn', name: 'Celeste', emoji: '🦄', arraySymbol: '🦄', svg: true, speech: 'Hi Lyra! Magical math time! 🦄✨' },
+      { id: 'cat', name: 'Barnaby', emoji: '🐱', arraySymbol: '🐱', svg: true, speech: 'Meow Lyra! Paws ready for math! 🐾' },
+      { id: 'caticorn', name: 'Sparkle', emoji: '🌈', arraySymbol: '★', svg: true, speech: 'Caticorn power activated! 🌈🐱' },
+      { id: 'star', name: 'Nova', emoji: '⭐', arraySymbol: '★', svg: true, speech: 'Ready to shine bright, Lyra! ⭐' }
     ];
     this.currentBuddyIndex = 0;
 
     // Themes
-    this.themes = ['unicorn', 'cat', 'nebula', 'candy'];
+    this.themes = ['arcade', 'unicorn', 'cat', 'nebula', 'candy'];
     this.currentThemeIndex = 0;
 
     this.initElements();
@@ -67,10 +72,14 @@ class StarQuestApp {
     this.mascotHorn = document.getElementById('mascotHorn');
     this.mascotCatEars = document.getElementById('mascotCatEars');
     this.mascotWhiskers = document.getElementById('mascotWhiskers');
+    this.mascotSvg = document.getElementById('mascotSvg');
+    this.mascotEmoji = document.getElementById('mascotEmoji');
 
     // Quick Operation & Difficulty Bars
     this.quickOpGroup = document.getElementById('quickOpGroup');
     this.quickDifficultyGroup = document.getElementById('quickDifficultyGroup');
+    this.tableDrillBar = document.getElementById('tableDrillBar');
+    this.tableDrillGroup = document.getElementById('tableDrillGroup');
 
     // Challenge Card elements
     this.challengeCard = document.getElementById('challengeCard');
@@ -98,6 +107,7 @@ class StarQuestApp {
 
     this.celebrationModal = document.getElementById('celebrationModal');
     this.celebSubtitle = document.getElementById('celebSubtitle');
+    this.celebMascots = document.getElementById('celebMascots');
     this.badgeCanvas = document.getElementById('badgeCanvas');
     this.saveBadgeBtn = document.getElementById('saveBadgeBtn');
     this.viewConstellationFromCelebBtn = document.getElementById('viewConstellationFromCelebBtn');
@@ -148,8 +158,15 @@ class StarQuestApp {
   }
 
   loadState() {
+    // 0. One-time switch to the Arcade look with Derpy as buddy (Lyra can still change both)
+    if (!localStorage.getItem('lyra_arcade_makeover')) {
+      localStorage.setItem('lyra_theme', 'arcade');
+      localStorage.setItem('lyra_active_buddy', 'derpy');
+      localStorage.setItem('lyra_arcade_makeover', 'done');
+    }
+
     // 1. Theme
-    const savedTheme = localStorage.getItem('lyra_theme') || 'unicorn';
+    const savedTheme = localStorage.getItem('lyra_theme') || 'arcade';
     document.body.setAttribute('data-theme', savedTheme);
     this.currentThemeIndex = this.themes.indexOf(savedTheme);
     if (this.currentThemeIndex === -1) this.currentThemeIndex = 0;
@@ -160,7 +177,7 @@ class StarQuestApp {
     }
 
     // 3. Buddy Companion (Unicorn / Cat / Caticorn / Star)
-    const savedBuddy = localStorage.getItem('lyra_active_buddy') || 'unicorn';
+    const savedBuddy = localStorage.getItem('lyra_active_buddy') || 'derpy';
     const foundIdx = this.buddies.findIndex(b => b.id === savedBuddy);
     this.currentBuddyIndex = foundIdx !== -1 ? foundIdx : 0;
     this.applyBuddyVisuals();
@@ -170,6 +187,7 @@ class StarQuestApp {
     this.quickOpGroup.querySelectorAll('.op-pill').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.op === currentOp);
     });
+    this.updateDrillBar();
 
     // 5. Sticky Difficulty Preset
     const currentDiff = window.mathEngine.settings.difficulty || 'medium';
@@ -209,8 +227,8 @@ class StarQuestApp {
       this.remainingSeconds = parseInt(savedRemaining, 10);
       this.questCompletedToday = questDone;
       if (this.questCompletedToday) {
-        this.timerTitleEl.textContent = "Today's Quest Done! ⭐";
-        this.timerSubEl.textContent = "Keep playing for extra stars!";
+        this.timerTitleEl.textContent = "Quest Cleared! 🏆";
+        this.timerSubEl.textContent = "Bonus round: keep earning XP!";
       }
     } else {
       this.remainingSeconds = this.totalQuestSeconds;
@@ -218,6 +236,9 @@ class StarQuestApp {
       localStorage.setItem('lyra_quest_done_today', 'false');
     }
 
+    if (!this.questCompletedToday) {
+      this.timerTitleEl.textContent = `Daily Quest: ${settings.dailyMinutes || 5} Minutes`;
+    }
     this.updateTimerDisplay();
 
     // 8. Stars earned today
@@ -256,7 +277,7 @@ class StarQuestApp {
 
       if (buddy.id === 'cat' && window.soundEngine) {
         window.soundEngine.playCatMeow();
-      } else if (buddy.id === 'unicorn' && window.soundEngine) {
+      } else if ((buddy.id === 'unicorn' || buddy.id === 'pixel') && window.soundEngine) {
         window.soundEngine.playUnicornSparkle();
       } else if (window.soundEngine) {
         window.soundEngine.playKeyClick();
@@ -280,12 +301,30 @@ class StarQuestApp {
       if (window.soundEngine) window.soundEngine.playKeyClick();
 
       const messages = {
-        'mixed': '🎲 Mixed Math Mode! Adding, subtracting & multiplying!',
-        'add': '➕ Just Adding Mode activated!',
-        'sub': '➖ Just Subtracting Mode activated!',
-        'mul': '✖️ Just Multiplying Mode activated!'
+        'mixed': '🎲 Mixed Mode unlocked! Adding, subtracting & multiplying!',
+        'add': '➕ Adding Mode: GO!',
+        'sub': '➖ Subtracting Mode: GO!',
+        'mul': '✖️ Multiplying Mode: GO! Pick a table to drill! 🎯'
       };
       if (window.easterEggs) window.easterEggs.showMascotMessage(messages[op] || '', 2500);
+
+      this.updateDrillBar();
+      this.nextProblem();
+    });
+
+    // Times-Table Drill picker (only visible in Just Multiplying mode)
+    this.tableDrillGroup.addEventListener('click', (e) => {
+      const btn = e.target.closest('.drill-btn');
+      if (!btn) return;
+      const table = btn.dataset.table;
+      window.mathEngine.setDrillTable(table);
+      this.updateDrillBar();
+      if (window.soundEngine) window.soundEngine.playKeyClick();
+
+      const msg = table === 'all'
+        ? '✖️ All the tables! Mix them up!'
+        : `🎯 Drilling the ${table}s! ${table} × 0 all the way to ${table} × 12!`;
+      if (window.easterEggs) window.easterEggs.showMascotMessage(msg, 2500);
 
       this.nextProblem();
     });
@@ -303,9 +342,9 @@ class StarQuestApp {
       if (window.soundEngine) window.soundEngine.playKeyClick();
 
       const diffMsg = {
-        'gentle': '🐣 Gentle Mode: Facts within 10 & cozy tables!',
-        'medium': '🌟 Just Right: Grade 3 standard facts!',
-        'challenge': '🚀 Challenge Wizard: Bigger sums and power tables!'
+        'gentle': '🐣 Easy Mode: Facts within 10 & cozy tables!',
+        'medium': '🎮 Normal Mode: Grade 3 standard facts!',
+        'challenge': '👾 BOSS MODE: Bigger sums and power tables!'
       };
       if (window.easterEggs) window.easterEggs.showMascotMessage(diffMsg[diff] || '', 2500);
 
@@ -365,6 +404,8 @@ class StarQuestApp {
       } else if (e.key === 'Backspace') {
         this.handleKeyInput('Backspace');
       } else if (e.key === 'Enter') {
+        // Enter always submits, never re-clicks a focused op/level/drill button
+        e.preventDefault();
         this.handleKeyInput('Enter');
       } else if (e.key.toLowerCase() === 'h') {
         this.openHelpModal();
@@ -389,10 +430,25 @@ class StarQuestApp {
     this.saveBadgeBtn.addEventListener('click', () => this.saveBadge());
   }
 
+  updateDrillBar() {
+    const s = window.mathEngine.settings;
+    const isMul = s.selectedOp === 'mul';
+    this.tableDrillBar.classList.toggle('hidden', !isMul);
+    const current = String(s.drillTable === undefined ? 'all' : s.drillTable);
+    this.tableDrillGroup.querySelectorAll('.drill-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.table === current);
+    });
+  }
+
   applyBuddyVisuals() {
     const buddy = this.buddies[this.currentBuddyIndex];
     this.currentBuddyEmoji.textContent = buddy.emoji;
     this.currentBuddyName.textContent = buddy.name;
+
+    // Costumed star mascot vs. big emoji mascot
+    this.mascotSvg.classList.toggle('hidden', !buddy.svg);
+    this.mascotEmoji.classList.toggle('hidden', !!buddy.svg);
+    this.mascotEmoji.textContent = buddy.emoji;
 
     const horn = this.mascotHorn;
     const catEars = this.mascotCatEars;
@@ -454,8 +510,8 @@ class StarQuestApp {
 
     // Show Leitner box status on the problem badge
     if (this.leitnerBoxBadge) {
-      const boxLabels = { 1: '🌱 Learning', 2: '🌿 Growing', 3: '🌟 Mastered' };
-      this.leitnerBoxBadge.textContent = boxLabels[p.box] || '🌱 Learning';
+      const boxLabels = { 1: '🌱 Lv.1 Learning', 2: '🌿 Lv.2 Growing', 3: '🌟 MAX Mastered' };
+      this.leitnerBoxBadge.textContent = boxLabels[p.box] || boxLabels[1];
     }
   }
 
@@ -522,14 +578,18 @@ class StarQuestApp {
     }
 
     this.challengeCard.classList.add('correct-flash');
+    const buddy = this.buddies[this.currentBuddyIndex];
     const cheers = [
-      "✨ Stellar job, Lyra!",
-      "🦄 Unicorn magic!",
-      "🐱 Pawsome job!",
-      "🚀 Math superstar!",
-      "🎉 Brilliant!"
+      "🎮 GG, Lyra!",
+      "⚡ +1 XP! Level up!",
+      "💥 Critical hit!",
+      "🕹️ Pro gamer move!",
+      "🏆 Nailed it!",
+      "✨ Flawless!",
+      `${buddy.emoji} ${buddy.name} says: EPIC!`
     ];
-    const cheer = cheers[Math.floor(Math.random() * cheers.length)];
+    let cheer = cheers[Math.floor(Math.random() * cheers.length)];
+    if (this.comboCount >= 3) cheer = `🔥 COMBO x${this.comboCount}! ${cheer}`;
     this.feedbackBanner.textContent = cheer;
     this.feedbackBanner.className = 'feedback-banner success';
 
@@ -630,7 +690,7 @@ class StarQuestApp {
     } else {
       this.pauseIcon.textContent = '⏸️';
       this.pauseText.textContent = 'Pause';
-      this.timerSubEl.textContent = 'You got this, star explorer!';
+      this.timerSubEl.textContent = 'Player 1, you got this! 🎮';
     }
   }
 
@@ -656,16 +716,18 @@ class StarQuestApp {
     }
 
     const minutes = Math.round(this.totalQuestSeconds / 60);
-    this.celebSubtitle.textContent = `You completed your ${minutes}-minute math quest for today!`;
+    this.celebSubtitle.textContent = `You beat today's ${minutes}-minute math quest!`;
+    this.celebMascots.textContent = `${this.buddies[this.currentBuddyIndex].emoji}🏆🎮`;
 
-    this.timerTitleEl.textContent = "Today's Quest Done! ⭐";
-    this.timerSubEl.textContent = "New star added to your sky map!";
+    this.timerTitleEl.textContent = "Quest Cleared! 🏆";
+    this.timerSubEl.textContent = "New star lit up on your Sky Map!";
 
     this.badgeReport = window.badgeMaker.buildReport({
       streak: this.streak,
       minutes,
       buddy: this.buddies[this.currentBuddyIndex],
-      difficulty: window.mathEngine.settings.difficulty || 'medium'
+      difficulty: window.mathEngine.settings.difficulty || 'medium',
+      drillTable: window.mathEngine.activeDrillTable
     });
     window.badgeMaker.render(this.badgeCanvas, this.badgeReport);
     window.badgeMaker.addToGallery(this.badgeReport);
@@ -724,8 +786,7 @@ class StarQuestApp {
     grid.className = 'star-array-grid';
     grid.style.gridTemplateColumns = `repeat(${data.cols}, 1fr)`;
 
-    const buddy = this.buddies[this.currentBuddyIndex].id;
-    const symbol = (buddy === 'unicorn') ? '🦄' : ((buddy === 'cat') ? '🐱' : '★');
+    const symbol = this.buddies[this.currentBuddyIndex].arraySymbol;
 
     for (let r = 1; r <= data.rows; r++) {
       for (let c = 1; c <= data.cols; c++) {
@@ -949,10 +1010,10 @@ class StarQuestApp {
     const gallery = window.badgeMaker.getGallery();
     this.galleryDetailView.classList.add('hidden');
     this.galleryGridView.classList.remove('hidden');
-    this.galleryTitle.textContent = "🏅 Lyra's Badge Gallery";
+    this.galleryTitle.textContent = "🏅 Lyra's Trophy Room";
     this.galleryIntro.textContent = gallery.length === 0
-      ? 'Finish a daily quest to win your very first badge! It will shine right here. 🌟'
-      : `${gallery.length} badge${gallery.length === 1 ? '' : 's'} earned! Tap one to see it up close.`;
+      ? 'Clear a daily quest to win your very first badge! It will shine right here. 🌟'
+      : `${gallery.length} badge${gallery.length === 1 ? '' : 's'} unlocked! Tap one to see it up close.`;
 
     this.galleryGrid.innerHTML = '';
     gallery.forEach(report => {
@@ -1141,8 +1202,8 @@ class StarQuestApp {
       localStorage.removeItem('lyra_timer_remaining');
       window.badgeMaker.reset();
       this.updateTimerDisplay();
-      this.timerTitleEl.textContent = `Daily Goal: ${settings.dailyMinutes || 5} Minutes`;
-      this.timerSubEl.textContent = "You got this, star explorer!";
+      this.timerTitleEl.textContent = `Daily Quest: ${settings.dailyMinutes || 5} Minutes`;
+      this.timerSubEl.textContent = "Player 1, you got this! 🎮";
       this.closeSettingsModal();
     }
   }

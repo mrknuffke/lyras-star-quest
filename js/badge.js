@@ -12,9 +12,9 @@ const OP_INFO = {
 };
 
 const METALS = {
-  gold:  { name: 'Gold', light: '#fff3b0', mid: '#ffd166', dark: '#c98a12', ribbon: '#f72585', sky: ['#2a0f4f', '#0b0220'] },
-  silver: { name: 'Silver', light: '#ffffff', mid: '#c7d2fe', dark: '#6b7bb8', ribbon: '#00b4d8', sky: ['#0f2a4f', '#020b20'] },
-  rose:  { name: 'Rose Gold', light: '#ffe4ec', mid: '#f9a8c9', dark: '#c0507e', ribbon: '#a855f7', sky: ['#3d0f45', '#12021c'] }
+  gold:  { name: '🟨 Legendary', light: '#fff3b0', mid: '#ffd166', dark: '#c98a12', ribbon: '#f72585', sky: ['#2a0f4f', '#0b0220'] },
+  silver: { name: '🟦 Epic', light: '#ffffff', mid: '#c7d2fe', dark: '#6b7bb8', ribbon: '#00b4d8', sky: ['#0f2a4f', '#020b20'] },
+  rose:  { name: '🟪 Rare', light: '#ffe4ec', mid: '#f9a8c9', dark: '#c0507e', ribbon: '#a855f7', sky: ['#3d0f45', '#12021c'] }
 };
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -150,7 +150,7 @@ class BadgeMaker {
   // Report: stats, praise, tip, and next-time ideas
   // =========================================================================
 
-  buildReport({ streak, minutes, buddy, difficulty }) {
+  buildReport({ streak, minutes, buddy, difficulty, drillTable = null }) {
     const log = this.log;
     const accuracy = log.solved > 0 ? Math.round((log.firstTry / log.solved) * 100) : null;
     const avgSec = log.solved > 0 ? log.totalMs / log.solved / 1000 : null;
@@ -170,6 +170,7 @@ class BadgeMaker {
       streak,
       buddy,
       difficulty,
+      drillTable,
       metal,
       solved: log.solved,
       accuracy,
@@ -191,51 +192,57 @@ class BadgeMaker {
 
   makeTitle(report, opsPracticed) {
     const adjectives = {
-      gold: ['Supernova', 'Dazzling', 'Legendary', 'Radiant', 'Blazing'],
-      silver: ['Shooting Star', 'Sparkling', 'Glittering', 'Brilliant', 'Moonbeam'],
-      rose: ['Rising Star', 'Brave', 'Unstoppable', 'Glowing', 'Starlight']
+      gold: ['Legendary', 'Final Boss', 'Supernova', 'Pro Gamer', 'Max Level'],
+      silver: ['Epic', 'Speedrun', 'Power-Up', 'Turbo', 'High Score'],
+      rose: ['Rising', 'Unstoppable', 'Brave', 'Level-Up', 'Respawn']
     };
     const nouns = {
-      mul: ['Times-Table Tamer', 'Multiplication Magician', 'Array Architect'],
-      add: ['Addition Ace', 'Ten-Frame Trailblazer', 'Sum Wizard'],
-      sub: ['Subtraction Sleuth', 'Take-Away Trailblazer', 'Difference Detective'],
-      mixed: ['Math Voyager', 'Number Navigator', 'Cosmic Calculator']
+      mul: ['Times-Table Boss', 'Multiplication Champion', 'Array Ace'],
+      add: ['Addition Ace', 'Sum Speedrunner', 'Plus Pro'],
+      sub: ['Subtraction Ninja', 'Take-Away Pro', 'Difference Detective'],
+      mixed: ['Math Gamer', 'Number Ninja', 'Combo Queen']
     };
     const key = opsPracticed.length === 1 ? opsPracticed[0] : 'mixed';
+    if (key === 'mul' && report.drillTable !== null) {
+      return `${pick(adjectives[report.metal])} ${report.drillTable}s Table Boss`;
+    }
     return `${pick(adjectives[report.metal])} ${pick(nouns[key])}`;
   }
 
   makePraise(report) {
     const special = [];
     if (report.mastered.length > 0) {
-      special.push(`You turned ${report.mastered.length === 1 ? 'a fact' : `${report.mastered.length} facts`} into a superstar today! 🌟`);
+      special.push(`You maxed out ${report.mastered.length === 1 ? 'a fact' : `${report.mastered.length} facts`} today! Achievement unlocked! 🌟`);
     }
     if (report.bestCombo >= 10) {
-      special.push(`A ${report.bestCombo}-in-a-row combo?! That's a comet streaking across the sky! ☄️`);
+      special.push(`A ${report.bestCombo}x COMBO?! That's a high-score streak! 🔥`);
     }
     if (report.accuracy !== null && report.accuracy >= 90 && report.solved >= 10) {
-      special.push(`${report.accuracy}% on the first try. Your math brain is shining SO bright! ✨`);
+      special.push(`${report.accuracy}% on the first try. That's a near-flawless run! ✨`);
     }
     if (report.solved >= 30) {
-      special.push(`${report.solved} facts in ${report.minutes} minutes. Zoom zoom, rocket brain! 🚀`);
+      special.push(`${report.solved} facts in ${report.minutes} minutes. Speedrunner energy! 🏃‍♀️💨`);
     }
     if (report.stretches >= 3) {
-      special.push(`${report.stretches} brain stretches today. Every one made your brain grow stronger! 💪🧠`);
+      special.push(`${report.stretches} respawns today, and you never quit. Every one made your brain stronger! 💪🧠`);
     }
     if (report.helpUses > 0) {
-      special.push(`You used Show Me like a real mathematician. Smart explorers use their tools! 🔭`);
+      special.push(`You used Show Me like a pro. Smart gamers use their power-ups! 💡`);
+    }
+    if (report.drillTable !== null && report.solved >= 5) {
+      special.push(`You trained the ${report.drillTable}s like a true boss fighter! 🎯`);
     }
     if (report.streak >= 3) {
-      special.push(`${report.streak} days in a row! That's how stars become constellations! 🔥`);
+      special.push(`${report.streak}-day streak! Daily login bonus: LEGENDARY! 🔥`);
     }
 
     const general = [
-      'Lyra, you showed up and worked hard. That is the most important math skill of all! 💖',
-      `${report.buddy.name} did a happy dance watching you practice today! ${report.buddy.emoji}`,
-      'Your brain is like a galaxy: every fact you practice adds a new star! 🌌',
-      'You kept going even when it was tricky. That is what champions do! 🏆',
-      'Math magic level: UP! The unicorns and space cats are cheering! 🦄🐱',
-      'Every fact you practice today makes tomorrow easier. You are building superpowers! ⚡',
+      'GG, Lyra! You showed up and played hard. That is the most important math skill of all! 💖',
+      `${report.buddy.name} did a victory dance watching you play today! ${report.buddy.emoji}`,
+      'Every fact you practice is XP for your brain. Level UP! ⚡',
+      'You kept going even when the level got tricky. That is what champions do! 🏆',
+      'The whole squad is cheering: Derpy, Brainy, Luna, and Pixel! 🐯🧟‍♀️🧛‍♀️👾',
+      'Today\'s practice makes tomorrow\'s levels easier. You are unlocking superpowers! 🎮',
       'Wow, Lyra! You made those numbers do exactly what you wanted! 🎯'
     ];
 
@@ -277,10 +284,13 @@ class BadgeMaker {
 
   makeNextTime(report) {
     const ideas = [];
-    const levelUp = { gentle: '🌟 Just Right', medium: '🚀 Challenge' };
+    const levelUp = { gentle: '🎮 Normal', medium: '👾 Boss Mode' };
+    const strongRun = report.accuracy !== null && report.accuracy >= 90 && report.solved >= 15;
 
-    if (report.accuracy !== null && report.accuracy >= 90 && report.solved >= 15 && levelUp[report.difficulty]) {
-      ideas.push(`Feeling strong? Try the ${levelUp[report.difficulty]} level for a fun new challenge!`);
+    if (strongRun && report.drillTable !== null && report.drillTable < 12) {
+      ideas.push(`You crushed the ${report.drillTable}s! Ready to drill the ${report.drillTable + 1}s next? 🎯`);
+    } else if (strongRun && levelUp[report.difficulty]) {
+      ideas.push(`Feeling strong? Try ${levelUp[report.difficulty]} for a new challenge!`);
     }
 
     const weakest = report.ops
@@ -297,7 +307,7 @@ class BadgeMaker {
     }
 
     if (report.stretches >= 3 && report.helpUses === 0) {
-      ideas.push('Stuck on one? Tap 💡 Show Me! It is a superpower, not a cheat!');
+      ideas.push('Stuck on one? Tap 💡 Show Me! It is a power-up, not a cheat!');
     }
 
     if (report.avgSec !== null && report.avgSec > 5 && report.solved >= 5) {
@@ -392,23 +402,23 @@ class BadgeMaker {
 
     y = this.drawStatTiles(ctx, W, y, report, metal);
     y = this.drawOpBars(ctx, W, y, report, metal);
-    y = this.drawSection(ctx, W, y, '💖 Shining Moments', report.praise, metal);
+    y = this.drawSection(ctx, W, y, '🏆 Highlights', report.praise, metal);
     if (report.mastered.length > 0) {
-      y = this.drawChips(ctx, W, y, '🌟 New Superstar Facts', report.mastered.map(m => `🌟 ${m}`), '#ffd166');
+      y = this.drawChips(ctx, W, y, '🌟 Facts Maxed Out', report.mastered.map(m => `🌟 ${m}`), '#ffd166');
     }
     if (report.missed.length > 0) {
-      y = this.drawChips(ctx, W, y, '🌱 Facts to Keep Growing',
+      y = this.drawChips(ctx, W, y, '🎯 Facts to Level Up',
         report.missed.map(m => `${m.label} = ${m.answer}`), '#06d6a0');
     }
-    y = this.drawSection(ctx, W, y, '💡 Star Tip', [report.tip], metal);
-    y = this.drawSection(ctx, W, y, '🚀 Next Quest Ideas', report.nextTime.map(t => `• ${t}`), metal);
+    y = this.drawSection(ctx, W, y, '💡 Pro Tip', [report.tip], metal);
+    y = this.drawSection(ctx, W, y, '🎮 Next Quest Ideas', report.nextTime.map(t => `• ${t}`), metal);
 
     // Footer
     y += 20;
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.font = '600 28px Outfit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-    ctx.fillText(`${report.buddy.emoji} ${report.buddy.name} is so proud of you, Lyra!`, W / 2, y + 10);
+    ctx.fillText(`${report.buddy.emoji} ${report.buddy.name} says: GG, Lyra! You're a legend!`, W / 2, y + 10);
     return y + 60;
   }
 

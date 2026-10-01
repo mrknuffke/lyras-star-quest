@@ -133,7 +133,8 @@ class MathEngine {
         mul: true
       },
       addMaxSum: 20,
-      mulTables: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+      mulTables: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+      drillTable: 'all' // 'all' or a single times table (0-12) to drill in Just Multiplying mode
     };
   }
 
@@ -145,6 +146,18 @@ class MathEngine {
   setOperation(op) {
     this.settings.selectedOp = op;
     this.saveSettings(this.settings);
+  }
+
+  setDrillTable(table) {
+    this.settings.drillTable = table;
+    this.saveSettings(this.settings);
+  }
+
+  // The single table being drilled, or null when not drilling
+  get activeDrillTable() {
+    const t = this.settings.drillTable;
+    if (this.settings.selectedOp !== 'mul' || t === undefined || t === 'all') return null;
+    return parseInt(t, 10);
   }
 
   setDifficulty(diff) {
@@ -188,7 +201,14 @@ class MathEngine {
         const t = parseInt(labFilter.table, 10);
         tables = t === 0 ? [0, 1] : [t];
       }
-      const maxB = (this.settings.difficulty === 'gentle') ? 5 : ((this.settings.difficulty === 'challenge') ? 12 : 10);
+      let maxB = (this.settings.difficulty === 'gentle') ? 5 : ((this.settings.difficulty === 'challenge') ? 12 : 10);
+
+      // Times-table drill: one table, all the way from × 0 to × 12
+      const drill = labFilter ? null : this.activeDrillTable;
+      if (drill !== null) {
+        tables = [drill];
+        maxB = 12;
+      }
 
       tables.forEach(a => {
         for (let b = 0; b <= maxB; b++) {
@@ -415,7 +435,7 @@ class MathEngine {
   }
 
   getMultiplicationHelp(a, b, ans) {
-    let tip = `Think of this as ${a} groups of ${b} glowing stars or caticorns!`;
+    let tip = `Think of this as ${a} rows of ${b}. Count up your whole squad!`;
     let highlightRow = null;
 
     if (a === 0 || b === 0) {

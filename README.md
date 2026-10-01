@@ -1,6 +1,6 @@
 # Lyra's Star Quest 🌟
 
-A magical, cosmic fact fluency web app built with love for **Lyra** to master **multiplication, addition, and subtraction** in just **5 fun minutes a day**!
+A neon arcade-style fact fluency web app built with love for **Lyra**, gamer girl, to master **multiplication, addition, and subtraction** in just **5 fun minutes a day**!
 
 Designed specifically for an 8-year-old math explorer to enjoy seamlessly on both **iPad** (tactile on-screen keypad, full-screen home screen app, offline support) and **Desktop/Laptop** (physical keyboard support).
 
@@ -9,15 +9,19 @@ Designed specifically for an 8-year-old math explorer to enjoy seamlessly on bot
 ## ✨ Features
 
 - ⏱️ **5-Minute Daily Quest**: A friendly countdown timer with a circular starlight progress ring that adapts across addition, subtraction, and multiplication facts.
-- 🧪 **Practice Lab (Free Play)**: Lyra can choose specific operations or drill individual times tables (e.g. 6s or 7s) at her own pace.
+- 🎲 **Quick Mode Picker**: One tap for Mixed, Just Adding, Just Subtracting, or Just Multiplying, plus 🐣 Easy, 🎮 Normal, or 👾 Boss Mode levels.
+- 🎯 **Times-Table Drill**: In Just Multiplying mode, pick any table from 0 to 12 to drill just that number (e.g. 7 × 0 all the way to 7 × 12, in both orders).
 - 💡 **Visual Conceptual Help System ("Show Me!")**:
   - **Multiplication**: Interactive glowing star array grids ($a \text{ rows} \times b \text{ columns}$) with number-sense chunking tips (e.g. *"Think: $5 \times 7 = 35$, plus $1$ more $7$ makes $42$!"*).
   - **Addition**: Visual ten-frames demonstrating the *"make a 10"* strategy.
   - **Subtraction**: Visual removal dots and think-addition hints ($b + \text{?} = a$).
   - *No shame, no penalty for using help!*
 - 🌌 **Constellation Map**: Every day she completes her 5 minutes, a new glowing star lights up in her monthly sky map with rank badges (*Starlight Apprentice*, *Cosmic Voyager*, *Legend of the Lyra Star*).
+- 🏅 **Quest Badges**: Every finished daily quest draws a one-of-a-kind badge (Legendary, Epic, or Rare) with a full report: facts solved, first-try %, best combo, streak, how each operation went, facts to level up, randomized praise, a pro tip for her trickiest fact, and ideas for next time.
+- 💾 **Save & Trophy Room**: Badges save as a picture (iPad share sheet → Save Image, or a download on a computer), and every badge is kept in the 🏅 Trophy Room to revisit and save again.
+- 🐯 **Lyra's Squad**: Pick a buddy: Derpy the goofy tiger, Brainy the friendly zombie, Luna the vampire girl, Pixel the arcade alien, Celeste the unicorn, Barnaby the space cat, Sparkle the caticorn, or Nova the star. Buddies cheer her on, fill the Show Me! arrays, and celebrate mistakes as brain stretches.
 - 🔊 **Tactile Web Audio Synthesizer**: Bubbly clicks on button tap, ascending pentatonic chimes on correct answers, and a grand cosmic celebration fanfare on daily completion (100% offline, zero audio file dependencies, with instant mute button).
-- 🎨 **4 Unlockable Cosmic Themes**: *Celestial Nebula*, *Enchanted Galaxy*, *Candy Cosmos*, and *Sunset Stardust*.
+- 🎨 **5 Themes**: 🎮 *Arcade* (the default: neon grid, glowing cards, chunky arcade buttons, pixel-font titles), plus *Unicorn*, *Cat*, *Nebula*, and *Candy*.
 - ⚙️ **Parent / Teacher Settings Drawer**: Easily customize which operations are active, select specific times tables ($0-12$), adjust addition/subtraction max sums, or adjust session length ($3$, $5$, or $10$ minutes).
 
 ---
@@ -25,8 +29,8 @@ Designed specifically for an 8-year-old math explorer to enjoy seamlessly on bot
 ## 🤫 Secret Easter Eggs & Fun Codes
 
 1. **Supernova Party Mode (Disco Nova)**:
-   - Tap **Nova the Star Mascot** (or the title) **5 times quickly**!
-   - Nova puts on disco sunglasses, rainbow disco strobes ignite, and party confetti rains down with chiptune synth beats!
+   - Tap **your buddy mascot** (top left) **5 times quickly**!
+   - Rainbow disco strobes ignite and party confetti rains down with chiptune synth beats! (Nova, Celeste, Barnaby, and Sparkle also put on disco sunglasses.)
 2. **Secret Keyboard Codes** (Desktop / Keyboard):
    - Type `party` anywhere to start Supernova Party Mode!
    - Type `galaxy` for a Galactic Star Shower!

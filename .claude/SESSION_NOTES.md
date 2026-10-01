@@ -1,8 +1,8 @@
-# Session Notes — 2026-10-01
-**Done:** Quest badge on the celebration screen (js/badge.js): per-day session log, canvas badge
-(medal + buddy + one star per fact), report, randomized praise/tip/next-time ideas, Save button
-(iPad share sheet; download on desktop). Badge Gallery (🏅 header button): stores reports + art seed,
-redraws identical badges, per-badge Save. sw.js cache v2. Headless-Chrome tested; pushed to Pages.
-**In progress:** Nothing.
-**Next step:** David checks Save on the iPad. Known, pre-existing: header overflows at phone width
-(<~600px); README doesn't mention badges yet. Repo has no `npm run preflight`.
+# Session Notes — 2026-10-02
+**Done (pushed):** Quest badge + Trophy Room gallery (js/badge.js).
+**Done (pushed 2026-10-02):** README updated. Arcade gamer theme as default (one-time switch via lyra_arcade_makeover flag),
+squad adds Derpy 🐯 / Brainy 🧟‍♀️ / Luna 🧛‍♀️ (vampire girl) / Pixel 👾 (emoji mascot for non-SVG buddies),
+gamer copy everywhere (Easy/Normal/Boss Mode, Legendary/Epic/Rare badges, Trophy Room),
+🎯 times-table drill row in Just Multiplying (settings.drillTable, ×0–×12), Enter no longer
+re-clicks focused buttons. sw.js cache v3. Headless-Chrome tested, no errors.
+**Next step:** David checks the iPad (Arcade look, Derpy, drill row, badge Save).
