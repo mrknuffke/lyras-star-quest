@@ -1,5 +1,5 @@
 /**
- * Lyra's Star Quest - Math Engine with Kid-Friendly Leitner System
+ * Star Quest - Math Engine with Kid-Friendly Leitner System
  * 
  * Leitner Mastery System:
  * - Box 1: 🌱 Sprouting (New or recently struggled facts - seen 60% of the time)
@@ -109,11 +109,41 @@ class LeitnerEngine {
   }
 }
 
+// Shared date helper: the device's LOCAL calendar day as YYYY-MM-DD.
+// (toISOString() is UTC, which made the day flip at 8 am in Singapore.)
+function localDateStr(d = new Date()) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Drill groups for addition & subtraction: the classic fact strategies, all within 20.
+// Each gen() returns [a, b] pairs. (Multiplication drills by times table instead.)
+const range = (lo, hi) => Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+
+const DRILL_GROUPS = {
+  add: [
+    { id: 'plus12', name: '+1 / +2', example: '7+2', gen: () => range(1, 10).flatMap(a => [[a, 1], [a, 2]]) },
+    { id: 'doubles', name: 'Doubles', example: '6+6', gen: () => range(1, 10).map(a => [a, a]) },
+    { id: 'neardoubles', name: 'Near Doubles', example: '6+7', gen: () => range(1, 9).map(a => [a, a + 1]) },
+    { id: 'tenpairs', name: 'Ten Pairs', example: '3+7', gen: () => range(1, 9).map(a => [a, 10 - a]) },
+    { id: 'over10', name: 'Over 10', example: '8+5', gen: () => [8, 9].flatMap(a => range(11 - a, 9).map(b => [a, b])) },
+    { id: 'plus10', name: '+10', example: '10+6', gen: () => range(1, 10).map(b => [10, b]) }
+  ],
+  sub: [
+    { id: 'minus12', name: '−1 / −2', example: '9−2', gen: () => range(3, 12).flatMap(a => [[a, 1], [a, 2]]) },
+    { id: 'from10', name: 'From 10', example: '10−4', gen: () => range(1, 9).map(b => [10, b]) },
+    { id: 'halves', name: 'Halves', example: '14−7', gen: () => range(1, 10).map(b => [b * 2, b]) },
+    { id: 'minus910', name: '−9 / −10', example: '15−9', gen: () => range(10, 20).flatMap(a => [[a, 9], [a, 10]]) },
+    { id: 'across10', name: 'Across 10', example: '13−5', gen: () => range(11, 18).flatMap(a => range(a - 9, 9).map(b => [a, b])) }
+  ]
+};
+
 class MathEngine {
   constructor() {
     this.leitner = new LeitnerEngine();
     this.lastProblem = null;
     this.settings = this.loadSettings();
+    this.migrateDrills();
   }
 
   loadSettings() {
@@ -134,8 +164,22 @@ class MathEngine {
       },
       addMaxSum: 20,
       mulTables: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-      drillTable: 'all' // 'all' or a single times table (0-12) to drill in Just Multiplying mode
+      // Drill picks per operation (empty = All). mul: times tables 0-12; add/sub: DRILL_GROUPS ids
+      drills: { mul: [], add: [], sub: [] }
     };
+  }
+
+  get drillGroups() {
+    return DRILL_GROUPS;
+  }
+
+  // Settings saved before multi-select drills had a single drillTable
+  migrateDrills() {
+    if (!this.settings.drills) {
+      const t = this.settings.drillTable;
+      this.settings.drills = { mul: (t === undefined || t === 'all') ? [] : [parseInt(t, 10)], add: [], sub: [] };
+      delete this.settings.drillTable;
+    }
   }
 
   saveSettings(newSettings) {
@@ -148,16 +192,50 @@ class MathEngine {
     this.saveSettings(this.settings);
   }
 
-  setDrillTable(table) {
-    this.settings.drillTable = table;
+  // Toggle one drill pick on/off for an operation; 'all' clears the picks
+  toggleDrill(op, pick) {
+    const picks = this.settings.drills[op] || [];
+    if (pick === 'all') {
+      this.settings.drills[op] = [];
+    } else if (picks.includes(pick)) {
+      this.settings.drills[op] = picks.filter(p => p !== pick);
+    } else {
+      this.settings.drills[op] = [...picks, pick];
+    }
+    if (op === 'mul') this.settings.drills.mul.sort((a, b) => a - b);
     this.saveSettings(this.settings);
   }
 
-  // The single table being drilled, or null when not drilling
-  get activeDrillTable() {
-    const t = this.settings.drillTable;
-    if (this.settings.selectedOp !== 'mul' || t === undefined || t === 'all') return null;
-    return parseInt(t, 10);
+  // The drill in play ({ op, picks, label }), or null when not drilling (Mixed mode or All)
+  get activeDrill() {
+    const op = this.settings.selectedOp;
+    const picks = (this.settings.drills && this.settings.drills[op]) || [];
+    if (op === 'mixed' || picks.length === 0) return null;
+
+    let label;
+    if (op === 'mul') {
+      const names = picks.map(t => `${t}s`);
+      label = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`;
+    } else {
+      const names = DRILL_GROUPS[op].filter(g => picks.includes(g.id)).map(g => g.name);
+      label = names.length === 1 ? names[0] : `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`;
+    }
+    return { op, picks: picks.slice(), label };
+  }
+
+  // Facts for the add/sub drill groups that are picked
+  drillFacts(op, picks, makeFact) {
+    const seen = new Set();
+    const facts = [];
+    DRILL_GROUPS[op].filter(g => picks.includes(g.id)).forEach(g => {
+      g.gen().forEach(([a, b]) => {
+        const key = `${a}_${b}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        facts.push(makeFact(a, b));
+      });
+    });
+    return facts;
   }
 
   setDifficulty(diff) {
@@ -203,10 +281,10 @@ class MathEngine {
       }
       let maxB = (this.settings.difficulty === 'gentle') ? 5 : ((this.settings.difficulty === 'challenge') ? 12 : 10);
 
-      // Times-table drill: one table, all the way from × 0 to × 12
-      const drill = labFilter ? null : this.activeDrillTable;
-      if (drill !== null) {
-        tables = [drill];
+      // Times-table drill: the picked tables, all the way from × 0 to × 12
+      const drill = labFilter ? null : this.activeDrill;
+      if (drill && drill.op === 'mul') {
+        tables = drill.picks;
         maxB = 12;
       }
 
@@ -226,10 +304,17 @@ class MathEngine {
       });
     }
 
+    const drill = labFilter ? null : this.activeDrill;
+
     // Generate addition candidates
     if (opsToInclude.includes('add')) {
       const diff = this.settings.difficulty;
-      if (diff === 'gentle') {
+      if (drill && drill.op === 'add') {
+        candidates.push(...this.drillFacts('add', drill.picks, (a, b) => ({
+          opType: 'add', opSymbol: '+', opName: 'Addition', badgeIcon: '➕',
+          num1: a, num2: b, answer: a + b, factKey: this.leitner.getFactKey('add', a, b)
+        })));
+      } else if (diff === 'gentle') {
         for (let a = 1; a <= 8; a++) {
           for (let b = 1; b <= (10 - a); b++) {
             candidates.push({
@@ -284,7 +369,12 @@ class MathEngine {
     // Generate subtraction candidates
     if (opsToInclude.includes('sub')) {
       const diff = this.settings.difficulty;
-      if (diff === 'gentle') {
+      if (drill && drill.op === 'sub') {
+        candidates.push(...this.drillFacts('sub', drill.picks, (a, b) => ({
+          opType: 'sub', opSymbol: '−', opName: 'Subtraction', badgeIcon: '➖',
+          num1: a, num2: b, answer: a - b, factKey: this.leitner.getFactKey('sub', a, b)
+        })));
+      } else if (diff === 'gentle') {
         for (let ans = 1; ans <= 7; ans++) {
           for (let b = 1; b <= (10 - ans); b++) {
             const a = ans + b;
@@ -417,7 +507,7 @@ class MathEngine {
     return selected;
   }
 
-  // Called when Lyra answers
+  // Called when the player answers
   recordAnswer(problem, isCorrect) {
     if (!problem || !problem.factKey) return;
     return this.leitner.recordAnswer(problem.factKey, isCorrect);
@@ -434,29 +524,32 @@ class MathEngine {
     }
   }
 
+  // Hints teach the strategy but stop one step short: the player always finishes the last step herself
   getMultiplicationHelp(a, b, ans) {
     let tip = `Think of this as ${a} rows of ${b}. Count up your whole squad!`;
     let highlightRow = null;
 
     if (a === 0 || b === 0) {
-      tip = "🌟 Zero Rule: Anything times 0 is always 0!";
+      tip = "🌟 Zero Rule: If you have zero groups (or groups of zero), how many do you have in all?";
     } else if (a === 1 || b === 1) {
-      tip = `🌟 One Rule: Any number times 1 stays itself (${ans})!`;
+      const other = a === 1 ? b : a;
+      tip = `🌟 One Rule: 1 group of ${other}... or ${other} groups of 1. How many is that?`;
     } else if (a === 2 || b === 2) {
       const other = a === 2 ? b : a;
-      tip = `💡 Double it! ${other} + ${other} = ${ans}`;
+      tip = `💡 Double it! What is ${other} + ${other}?`;
     } else if (a === 5 || b === 5) {
-      tip = `💡 Skip-count by 5s: count up by 5s to find ${ans}!`;
+      const other = a === 5 ? b : a;
+      tip = `💡 Skip-count by 5s, ${other} times: 5, 10, 15... where do you land?`;
     } else if (a === 6 || b === 6) {
       const other = a === 6 ? b : a;
-      tip = `💡 Friendly Chunk: 5 × ${other} = ${5 * other}, plus 1 more ${other} makes ${ans}!`;
+      tip = `💡 Friendly Chunk: 5 × ${other} = ${5 * other}. Now add 1 more ${other}!`;
       highlightRow = 5;
     } else if (a === 9 || b === 9) {
       const other = a === 9 ? b : a;
-      tip = `💡 10-Trick: 10 × ${other} = ${10 * other}, take away ${other} = ${ans}!`;
+      tip = `💡 10-Trick: 10 × ${other} = ${10 * other}. Now take away one ${other}!`;
     } else if (a === 4 || b === 4) {
       const other = a === 4 ? b : a;
-      tip = `💡 Double-Double: Double ${other} is ${other * 2}, and double that is ${ans}!`;
+      tip = `💡 Double-Double: Double ${other} is ${other * 2}. Now double that!`;
     }
 
     return {
@@ -471,17 +564,17 @@ class MathEngine {
   }
 
   getAdditionHelp(a, b, ans) {
-    let tip = `Count them up together: ${a} + ${b} = ${ans}!`;
+    let tip = `Count on! Start at the bigger number and count up the rest.`;
     
     if (a + b > 10 && a < 10 && b < 10) {
       const needToMake10 = 10 - a;
       const leftOver = b - needToMake10;
-      tip = `💡 Make a 10: Start with ${a}. Add ${needToMake10} to make 10, then add leftover ${leftOver} = ${ans}!`;
+      tip = `💡 Make a 10: Start with ${a}. Add ${needToMake10} to make 10. Then add the leftover ${leftOver}!`;
     } else if (a === b) {
-      tip = `💡 Doubles Fact! Two ${a}s make ${ans}!`;
+      tip = `💡 Doubles Fact! What do two ${a}s make?`;
     } else if (Math.abs(a - b) === 1) {
       const smaller = Math.min(a, b);
-      tip = `💡 Near-Doubles: Double ${smaller} is ${smaller * 2}, plus 1 is ${ans}!`;
+      tip = `💡 Near-Doubles: Double ${smaller} is ${smaller * 2}. Now add 1 more!`;
     }
 
     return {
@@ -495,7 +588,7 @@ class MathEngine {
   }
 
   getSubtractionHelp(a, b, ans) {
-    const tip = `💡 Think Addition: What number plus ${b} makes ${a}? (${b} + ${ans} = ${a})!`;
+    const tip = `💡 Think Addition: ${b} + ? = ${a}. What number is missing?`;
     return {
       type: 'sub',
       title: `${a} − ${b}`,

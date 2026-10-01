@@ -1,5 +1,5 @@
 /**
- * Lyra's Star Quest - Quest Badge Maker
+ * Star Quest - Quest Badge Maker
  * Logs each daily quest session, then draws a one-of-a-kind badge picture
  * with a full report, randomized praise, a tip, and ideas for next time.
  * The finished badge can be saved as a PNG (share sheet on iPad, download elsewhere).
@@ -48,7 +48,7 @@ class BadgeMaker {
   }
 
   todayStr() {
-    return new Date().toISOString().slice(0, 10);
+    return localDateStr();
   }
 
   emptyLog() {
@@ -150,7 +150,7 @@ class BadgeMaker {
   // Report: stats, praise, tip, and next-time ideas
   // =========================================================================
 
-  buildReport({ streak, minutes, buddy, difficulty, drillTable = null }) {
+  buildReport({ streak, minutes, buddy, difficulty, drill = null }) {
     const log = this.log;
     const accuracy = log.solved > 0 ? Math.round((log.firstTry / log.solved) * 100) : null;
     const avgSec = log.solved > 0 ? log.totalMs / log.solved / 1000 : null;
@@ -166,11 +166,12 @@ class BadgeMaker {
       id: Date.now(),
       seed: Math.floor(Math.random() * 4294967296),
       date: log.date,
+      player: playerName() || 'Player',
       minutes,
       streak,
       buddy,
       difficulty,
-      drillTable,
+      drill,
       metal,
       solved: log.solved,
       accuracy,
@@ -203,8 +204,11 @@ class BadgeMaker {
       mixed: ['Math Gamer', 'Number Ninja', 'Combo Queen']
     };
     const key = opsPracticed.length === 1 ? opsPracticed[0] : 'mixed';
-    if (key === 'mul' && report.drillTable !== null) {
-      return `${pick(adjectives[report.metal])} ${report.drillTable}s Table Boss`;
+    // Drill titles: "7s Table Boss", "6s & 7s Table Boss", "Doubles Boss" (long combos fall back to normal titles)
+    const drill = report.drill;
+    if (drill && key === drill.op && drill.picks.length <= 3) {
+      const suffix = drill.op === 'mul' ? 'Table Boss' : 'Boss';
+      return `${pick(adjectives[report.metal])} ${drill.label} ${suffix}`;
     }
     return `${pick(adjectives[report.metal])} ${pick(nouns[key])}`;
   }
@@ -226,31 +230,29 @@ class BadgeMaker {
     if (report.stretches >= 3) {
       special.push(`${report.stretches} respawns today, and you never quit. Every one made your brain stronger! 💪🧠`);
     }
-    if (report.helpUses > 0) {
-      special.push(`You used Show Me like a pro. Smart gamers use their power-ups! 💡`);
-    }
-    if (report.drillTable !== null && report.solved >= 5) {
-      special.push(`You trained the ${report.drillTable}s like a true boss fighter! 🎯`);
+    if (report.drill && report.solved >= 5) {
+      const what = report.drill.op === 'mul' ? `the ${report.drill.label}` : report.drill.label;
+      special.push(`You trained ${what} like a true boss fighter! 🎯`);
     }
     if (report.streak >= 3) {
       special.push(`${report.streak}-day streak! Daily login bonus: LEGENDARY! 🔥`);
     }
 
     const general = [
-      'GG, Lyra! You showed up and played hard. That is the most important math skill of all! 💖',
+      'GG, {name}! You showed up and played hard. That is the most important math skill of all! 💖',
       `${report.buddy.name} did a victory dance watching you play today! ${report.buddy.emoji}`,
       'Every fact you practice is XP for your brain. Level UP! ⚡',
       'You kept going even when the level got tricky. That is what champions do! 🏆',
       'The whole squad is cheering: Derpy, Brainy, Luna, and Pixel! 🐯🧟‍♀️🧛‍♀️👾',
       'Today\'s practice makes tomorrow\'s levels easier. You are unlocking superpowers! 🎮',
-      'Wow, Lyra! You made those numbers do exactly what you wanted! 🎯'
+      'Wow, {name}! You made those numbers do exactly what you wanted! 🎯'
     ];
 
     const lines = [];
     if (special.length > 0) lines.push(pick(special));
     const remaining = shuffle(general);
     while (lines.length < 2) lines.push(remaining.pop());
-    return lines;
+    return lines.map(withName);
   }
 
   makeTip(report, opsPracticed) {
@@ -287,8 +289,12 @@ class BadgeMaker {
     const levelUp = { gentle: '🎮 Normal', medium: '👾 Boss Mode' };
     const strongRun = report.accuracy !== null && report.accuracy >= 90 && report.solved >= 15;
 
-    if (strongRun && report.drillTable !== null && report.drillTable < 12) {
-      ideas.push(`You crushed the ${report.drillTable}s! Ready to drill the ${report.drillTable + 1}s next? 🎯`);
+    const drill = report.drill;
+    const lastTable = drill && drill.op === 'mul' ? Math.max(...drill.picks) : null;
+    if (strongRun && lastTable !== null && lastTable < 12) {
+      ideas.push(`You crushed the ${drill.label}! Ready to add the ${lastTable + 1}s next? 🎯`);
+    } else if (strongRun && drill && drill.op !== 'mul') {
+      ideas.push(`You crushed ${drill.label}! Try adding another fact group to your drill! 🎯`);
     } else if (strongRun && levelUp[report.difficulty]) {
       ideas.push(`Feeling strong? Try ${levelUp[report.difficulty]} for a new challenge!`);
     }
@@ -387,7 +393,7 @@ class BadgeMaker {
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = 'rgba(255,255,255,0.75)';
     ctx.font = '600 32px Outfit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-    ctx.fillText(`✦ Lyra's Star Quest  •  ${this.prettyDate(report.date)} ✦`, W / 2, 70);
+    ctx.fillText(`✦ ${this.badgeOwner(report)}'s Star Quest  •  ${this.prettyDate(report.date)} ✦`, W / 2, 70);
 
     this.drawMedallion(ctx, W / 2, 440, report, metal);
 
@@ -418,7 +424,7 @@ class BadgeMaker {
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255,255,255,0.6)';
     ctx.font = '600 28px Outfit, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
-    ctx.fillText(`${report.buddy.emoji} ${report.buddy.name} says: GG, Lyra! You're a legend!`, W / 2, y + 10);
+    ctx.fillText(`${report.buddy.emoji} ${report.buddy.name} says: GG, ${this.badgeOwner(report)}! You're a legend!`, W / 2, y + 10);
     return y + 60;
   }
 
@@ -821,15 +827,21 @@ class BadgeMaker {
   // Saving: share sheet on iPad (Save Image -> Photos), download elsewhere
   // =========================================================================
 
-  async saveImage(canvas, date) {
+  // Badges made before names existed have no player saved: they belong to the current player
+  badgeOwner(report) {
+    return report.player || playerName() || 'Player';
+  }
+
+  async saveImage(canvas, report) {
     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
     if (!blob) return false;
-    const fileName = `lyra-star-badge-${date}.png`;
+    const slug = this.badgeOwner(report).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'player';
+    const fileName = `${slug}-star-badge-${report.date}.png`;
     const file = new File([blob], fileName, { type: 'image/png' });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
-        await navigator.share({ files: [file], title: "Lyra's Star Badge" });
+        await navigator.share({ files: [file], title: `${this.badgeOwner(report)}'s Star Badge` });
         return true;
       } catch (e) {
         if (e.name === 'AbortError') return false;

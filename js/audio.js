@@ -1,5 +1,5 @@
 /**
- * Lyra's Star Quest - Web Audio Sound Synthesizer
+ * Star Quest - Web Audio Sound Synthesizer
  * Pure Web Audio API: 100% offline, zero external audio asset dependencies.
  * Now with cute cat meows, magical unicorn sparkle chimes, and silly cartoon boings!
  */
@@ -58,7 +58,7 @@ class SoundEngine {
     } catch (e) {}
   }
 
-  // Cheerful starlight chime when Lyra solves a problem
+  // Cheerful starlight chime when the player solves a problem
   playCorrect(streak = 0) {
     if (this.isMuted) return;
     this.init();

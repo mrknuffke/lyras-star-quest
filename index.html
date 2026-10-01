@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Lyra's Star Quest 🌟 Unicorns, Cats & Math Fluency!</title>
-  <meta name="description" content="A magical, vibrant math fact fluency app for Lyra with unicorns, space cats, and joyful practice for addition, subtraction, and multiplication!">
+  <title>Star Quest 🌟 Math Fact Fluency</title>
+  <meta name="description" content="A neon arcade math fact fluency game: 5 fun minutes a day of addition, subtraction, and multiplication, with badges, drills, and a squad of buddies.">
   
   <!-- Web App Manifest & Apple PWA support for iPad -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#190b3b">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Lyra's Stars">
+  <meta name="apple-mobile-web-app-title" content="Star Quest">
   <link rel="apple-touch-icon" href="assets/icon.svg">
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 
@@ -90,11 +90,11 @@
               </defs>
             </svg>
           </div>
-          <span class="mascot-speech" id="mascotSpeech">Player 1 ready? Let's GO, Lyra! 🎮</span>
+          <span class="mascot-speech" id="mascotSpeech">Player 1 ready? Let's GO! 🎮</span>
         </button>
 
         <div class="app-branding">
-          <h1 class="app-title">Lyra's <span class="gradient-text">Star Quest</span></h1>
+          <h1 class="app-title"><span class="player-name">Player</span>'s <span class="gradient-text">Star Quest</span></h1>
           <button id="buddySwitchBtn" class="buddy-switch-pill" title="Switch your buddy!">
             <span id="currentBuddyEmoji">🐯</span> <span id="currentBuddyName">Derpy</span> ▾
           </button>
@@ -163,25 +163,10 @@
       </div>
     </section>
 
-    <!-- Times-Table Drill: pick one table to practice (only in Just Multiplying mode) -->
-    <section class="table-drill-bar hidden" id="tableDrillBar" aria-label="Pick a times table to drill">
+    <!-- Drill picker: times tables (✖️) or fact-strategy groups (➕ ➖), multi-select. Buttons built in app.js -->
+    <section class="table-drill-bar hidden" id="tableDrillBar" aria-label="Pick facts to drill">
       <span class="difficulty-label">🎯 Drill:</span>
-      <div class="table-drill-group" id="tableDrillGroup">
-        <button class="drill-btn active" data-table="all">All</button>
-        <button class="drill-btn" data-table="0">0</button>
-        <button class="drill-btn" data-table="1">1</button>
-        <button class="drill-btn" data-table="2">2</button>
-        <button class="drill-btn" data-table="3">3</button>
-        <button class="drill-btn" data-table="4">4</button>
-        <button class="drill-btn" data-table="5">5</button>
-        <button class="drill-btn" data-table="6">6</button>
-        <button class="drill-btn" data-table="7">7</button>
-        <button class="drill-btn" data-table="8">8</button>
-        <button class="drill-btn" data-table="9">9</button>
-        <button class="drill-btn" data-table="10">10</button>
-        <button class="drill-btn" data-table="11">11</button>
-        <button class="drill-btn" data-table="12">12</button>
-      </div>
+      <div class="table-drill-group" id="tableDrillGroup"></div>
     </section>
 
     <!-- Sticky Difficulty Quick Presets Bar: Easy, Normal, Boss Mode -->
@@ -257,9 +242,10 @@
 
         <!-- Quick Help Bar -->
         <div class="help-bar">
-          <button id="helpBtn" class="help-trigger-btn" aria-label="Show visual help and hints">
-            <span class="help-icon">💡</span>
-            <span class="help-text">Show Me! (Hint)</span>
+          <!-- Locked until the player makes one real try on the problem -->
+          <button id="helpBtn" class="help-trigger-btn locked" aria-label="Show visual help and hints">
+            <span class="help-icon" id="helpIcon">🔒</span>
+            <span class="help-text" id="helpText">Show Me! (Try first)</span>
           </button>
         </div>
       </div>
@@ -289,6 +275,20 @@
     </main>
 
     <!-- Celebration Screen (Overlay when 5-min Daily Quest completes!) -->
+    <!-- Welcome: first visit asks for the player's name, which makes it their personal quest -->
+    <div class="modal-backdrop hidden" id="welcomeModal" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+      <div class="modal-card celebration-card welcome-card">
+        <div class="celebration-mascot-jump">🐯🎮👾</div>
+        <h2 class="celebration-title" id="welcomeTitle">Welcome to Star Quest!</h2>
+        <p class="celebration-subtitle">5 fun minutes of math a day. Earn XP, win badges, and level up your brain!</p>
+        <form id="welcomeForm" class="welcome-form">
+          <label for="welcomeNameInput" class="setting-section-title">What's your name, player?</label>
+          <input type="text" id="welcomeNameInput" class="styled-select name-input welcome-name-input" maxlength="14" autocomplete="off" placeholder="Type your name" required>
+          <button type="submit" class="pill-btn primary-btn">Start My Quest! 🚀</button>
+        </form>
+      </div>
+    </div>
+
     <div class="modal-backdrop hidden" id="celebrationModal" role="dialog" aria-modal="true">
       <div class="modal-card celebration-card">
         <div class="celebration-mascot-jump" id="celebMascots">🐯🏆🎮</div>
@@ -338,7 +338,7 @@
     <div class="modal-backdrop hidden" id="gardenModal" role="dialog" aria-modal="true">
       <div class="modal-card garden-card">
         <div class="modal-header">
-          <h3>🌱 Lyra's Fact Mastery Garden</h3>
+          <h3>🌱 <span class="player-name">Player</span>'s Fact Mastery Garden</h3>
           <button class="modal-close-btn" id="closeGardenBtn" aria-label="Close garden">✕</button>
         </div>
         <p class="constellation-intro">Every fact grows as you practice! Getting them right moves them from 🌱 Sprouting to 🌿 Growing to 🌟 Mastered!</p>
@@ -371,7 +371,7 @@
     <div class="modal-backdrop hidden" id="constellationModal" role="dialog" aria-modal="true">
       <div class="modal-card constellation-card">
         <div class="modal-header">
-          <h3>🌌 Lyra's Night Sky Constellation</h3>
+          <h3>🌌 <span class="player-name">Player</span>'s Night Sky Constellation</h3>
           <button class="modal-close-btn" id="closeConstellationBtn" aria-label="Close constellation">✕</button>
         </div>
         <p class="constellation-intro">Every day you practice for 5 minutes, a new star glows in your sky map!</p>
@@ -391,7 +391,7 @@
     <div class="modal-backdrop hidden" id="galleryModal" role="dialog" aria-modal="true">
       <div class="modal-card gallery-card">
         <div class="modal-header">
-          <h3 id="galleryTitle">🏅 Lyra's Trophy Room</h3>
+          <h3 id="galleryTitle">🏅 Trophy Room</h3>
           <button class="modal-close-btn" id="closeGalleryBtn" aria-label="Close trophy room">✕</button>
         </div>
 
@@ -423,6 +423,11 @@
         </div>
         
         <div class="settings-body">
+          <div class="setting-section-title">Player Name:</div>
+          <div class="setting-row">
+            <input type="text" id="playerNameInput" class="styled-select name-input" maxlength="14" autocomplete="off" style="width: 100%;">
+          </div>
+
           <div class="setting-section-title">Difficulty Level (Sticky):</div>
           <div class="setting-row">
             <select id="modalDifficultySelect" class="styled-select" style="width: 100%;">
@@ -433,7 +438,7 @@
             </select>
           </div>
 
-          <div class="setting-section-title">Choose Lyra's Buddy:</div>
+          <div class="setting-section-title">Choose Your Buddy:</div>
           <div class="setting-row">
             <select id="modalBuddySelect" class="styled-select" style="width: 100%;">
               <option value="derpy">🐯 Derpy the Goofy Tiger</option>

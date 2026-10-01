@@ -1,6 +1,6 @@
 {
-  "name": "Lyra's Star Quest 🌟 Fact Fluency",
-  "short_name": "Lyra's Stars",
+  "name": "Star Quest 🌟 Math Fact Fluency",
+  "short_name": "Star Quest",
   "description": "Magical math fact fluency practice for addition, subtraction, and multiplication.",
   "start_url": "./index.html",
   "display": "standalone",

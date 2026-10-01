@@ -1,5 +1,5 @@
 /**
- * Lyra's Star Quest - Easter Eggs, Silliness & Creature Animations
+ * Star Quest - Easter Eggs, Silliness & Creature Animations
  * Galloping unicorns, floating space cats, silly mascot hats, secret words,
  * and a rich library of gentle, encouraging growth-mindset praises.
  */
@@ -59,7 +59,7 @@ class EasterEggController {
       "🛡️ Shields up! Mistakes can't stop you!",
       "💾 Progress saved! Now try that level again!",
       "🏃‍♀️ Speedrunners fall all the time. Then they get faster!",
-      "🌟 You are doing amazing, Lyra! Keep going!",
+      "🌟 You are doing amazing, {name}! Keep going!",
       "💪 Hard levels are where the best XP is!",
       "🔄 Plot twist! Let's try a different answer!",
       "🚀 Three, two, one... ready for your next try!",
@@ -166,7 +166,7 @@ class EasterEggController {
       "🧛‍♀️ Luna: 'One fact! Two facts! THREE FACTS! I love counting!'",
       "👾 Pixel says: 'High score incoming! Beep boop!'",
       "🎮 Achievement unlocked: Tapped your buddy!",
-      "🦄 *Neigh!* Unicorn starlight power is with you, Lyra!",
+      "🦄 *Neigh!* Unicorn starlight power is with you, {name}!",
       "🐱 *Purrrrr* You are pawsitively awesome!",
       "✨ Did you know 7 × 8 is 56? Secret galaxy fact!",
       "🌈 Brain muscles expanding at warp speed!",
@@ -185,13 +185,13 @@ class EasterEggController {
     } while (newIndex === this.lastEncouragementIndex && this.mistakeEncouragements.length > 1);
 
     this.lastEncouragementIndex = newIndex;
-    return this.mistakeEncouragements[newIndex];
+    return withName(this.mistakeEncouragements[newIndex]);
   }
 
   showMascotMessage(text, duration = 3500) {
     const bubble = document.getElementById('mascotSpeech');
     if (!bubble) return;
-    bubble.textContent = text;
+    bubble.textContent = withName(text);
     bubble.classList.add('show-speech');
     clearTimeout(this.bubbleTimer);
     this.bubbleTimer = setTimeout(() => {
