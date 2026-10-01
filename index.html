@@ -126,6 +126,9 @@
           <button id="constellationBtn" class="icon-btn" title="View Sky Constellation" aria-label="Constellation map">
             🌌
           </button>
+          <button id="badgeGalleryBtn" class="icon-btn" title="My Badge Gallery" aria-label="Badge gallery">
+            🏅
+          </button>
           <button id="themeToggleBtn" class="icon-btn" title="Change Theme (Unicorn, Cat, Nebula, Candy)" aria-label="Switch theme">
             🎨
           </button>
@@ -266,21 +269,11 @@
       <div class="modal-card celebration-card">
         <div class="celebration-mascot-jump">🦄🎉🐱</div>
         <h2 class="celebration-title">You Did It, Lyra! 🎉</h2>
-        <p class="celebration-subtitle">You completed your 5-minute math quest for today!</p>
-        
-        <div class="celebration-stats-grid">
-          <div class="celeb-stat-box">
-            <span class="celeb-stat-num" id="celebSolved">24</span>
-            <span class="celeb-stat-lbl">Facts Solved</span>
-          </div>
-          <div class="celeb-stat-box">
-            <span class="celeb-stat-num" id="celebAccuracy">96%</span>
-            <span class="celeb-stat-lbl">Accuracy</span>
-          </div>
-          <div class="celeb-stat-box">
-            <span class="celeb-stat-num" id="celebStreak">🔥 2</span>
-            <span class="celeb-stat-lbl">Day Streak</span>
-          </div>
+        <p class="celebration-subtitle" id="celebSubtitle">You completed your 5-minute math quest for today!</p>
+
+        <!-- Today's one-of-a-kind Quest Badge with full report -->
+        <div class="badge-frame">
+          <canvas id="badgeCanvas" class="badge-canvas" role="img" aria-label="Your quest badge"></canvas>
         </div>
 
         <div class="constellation-reward-preview">
@@ -288,7 +281,10 @@
         </div>
 
         <div class="celebration-actions">
-          <button id="viewConstellationFromCelebBtn" class="pill-btn primary-btn">
+          <button id="saveBadgeBtn" class="pill-btn primary-btn">
+            💾 Save My Badge
+          </button>
+          <button id="viewConstellationFromCelebBtn" class="pill-btn secondary-btn">
             🌌 View My Constellation
           </button>
           <button id="keepPracticingBtn" class="pill-btn secondary-btn">
@@ -363,6 +359,33 @@
         <div class="constellation-footer-info">
           <span id="constellationDaysCount">3 of 30 Stars Lit</span>
           <span class="constellation-badge" id="currentRankBadge">🦄 Celestial Unicorn Champion</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Badge Gallery Modal: every finished quest's badge, redrawn from its saved report -->
+    <div class="modal-backdrop hidden" id="galleryModal" role="dialog" aria-modal="true">
+      <div class="modal-card gallery-card">
+        <div class="modal-header">
+          <h3 id="galleryTitle">🏅 Lyra's Badge Gallery</h3>
+          <button class="modal-close-btn" id="closeGalleryBtn" aria-label="Close badge gallery">✕</button>
+        </div>
+
+        <!-- Grid of all badges -->
+        <div id="galleryGridView">
+          <p class="constellation-intro" id="galleryIntro">Every quest you finish adds a shiny new badge here!</p>
+          <div class="gallery-grid" id="galleryGrid"></div>
+        </div>
+
+        <!-- One badge, full size -->
+        <div id="galleryDetailView" class="hidden">
+          <div class="badge-frame">
+            <canvas id="galleryDetailCanvas" class="badge-canvas" role="img" aria-label="Badge"></canvas>
+          </div>
+          <div class="celebration-actions">
+            <button id="gallerySaveBtn" class="pill-btn primary-btn">💾 Save This Badge</button>
+            <button id="galleryBackBtn" class="pill-btn secondary-btn">← Back to All Badges</button>
+          </div>
         </div>
       </div>
     </div>
@@ -456,6 +479,7 @@
   <script src="js/audio.js"></script>
   <script src="js/math-engine.js"></script>
   <script src="js/easter-eggs.js"></script>
+  <script src="js/badge.js"></script>
   <script src="js/app.js"></script>
 
   <!-- PWA Service Worker Registration -->

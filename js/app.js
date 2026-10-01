@@ -97,11 +97,23 @@ class StarQuestApp {
     this.helpContentBody = document.getElementById('helpContentBody');
 
     this.celebrationModal = document.getElementById('celebrationModal');
-    this.celebSolved = document.getElementById('celebSolved');
-    this.celebAccuracy = document.getElementById('celebAccuracy');
-    this.celebStreak = document.getElementById('celebStreak');
+    this.celebSubtitle = document.getElementById('celebSubtitle');
+    this.badgeCanvas = document.getElementById('badgeCanvas');
+    this.saveBadgeBtn = document.getElementById('saveBadgeBtn');
     this.viewConstellationFromCelebBtn = document.getElementById('viewConstellationFromCelebBtn');
     this.keepPracticingBtn = document.getElementById('keepPracticingBtn');
+
+    this.badgeGalleryBtn = document.getElementById('badgeGalleryBtn');
+    this.galleryModal = document.getElementById('galleryModal');
+    this.closeGalleryBtn = document.getElementById('closeGalleryBtn');
+    this.galleryTitle = document.getElementById('galleryTitle');
+    this.galleryIntro = document.getElementById('galleryIntro');
+    this.galleryGrid = document.getElementById('galleryGrid');
+    this.galleryGridView = document.getElementById('galleryGridView');
+    this.galleryDetailView = document.getElementById('galleryDetailView');
+    this.galleryDetailCanvas = document.getElementById('galleryDetailCanvas');
+    this.gallerySaveBtn = document.getElementById('gallerySaveBtn');
+    this.galleryBackBtn = document.getElementById('galleryBackBtn');
 
     this.constellationModal = document.getElementById('constellationModal');
     this.closeConstellationBtn = document.getElementById('closeConstellationBtn');
@@ -304,6 +316,12 @@ class StarQuestApp {
     this.constellationBtn.addEventListener('click', () => this.openConstellationModal());
     this.closeConstellationBtn.addEventListener('click', () => this.closeConstellationModal());
 
+    // Badge Gallery Modal
+    this.badgeGalleryBtn.addEventListener('click', () => this.openGalleryModal());
+    this.closeGalleryBtn.addEventListener('click', () => this.galleryModal.classList.add('hidden'));
+    this.galleryBackBtn.addEventListener('click', () => this.showGalleryGrid());
+    this.gallerySaveBtn.addEventListener('click', () => this.saveGalleryBadge());
+
     // Fact Mastery Garden Modal
     if (this.masteryGardenBtn) {
       this.masteryGardenBtn.addEventListener('click', () => this.openGardenModal());
@@ -368,6 +386,7 @@ class StarQuestApp {
     this.keepPracticingBtn.addEventListener('click', () => {
       this.celebrationModal.classList.add('hidden');
     });
+    this.saveBadgeBtn.addEventListener('click', () => this.saveBadge());
   }
 
   applyBuddyVisuals() {
@@ -404,6 +423,7 @@ class StarQuestApp {
     this.constellationModal.classList.add('hidden');
     this.settingsModal.classList.add('hidden');
     if (this.gardenModal) this.gardenModal.classList.add('hidden');
+    this.galleryModal.classList.add('hidden');
   }
 
   // =========================================================================
@@ -418,6 +438,8 @@ class StarQuestApp {
     this.feedbackBanner.className = 'feedback-banner';
 
     this.currentProblem = window.mathEngine.generateProblem('daily');
+    this.problemStartedAt = Date.now();
+    this.problemHadMistake = false;
     this.renderProblem();
     this.updateMasteryCount();
   }
@@ -486,7 +508,14 @@ class StarQuestApp {
     localStorage.setItem('lyra_stars_date', todayStr);
 
     // Record correct answer in Leitner system
-    window.mathEngine.recordAnswer(this.currentProblem, true);
+    const rec = window.mathEngine.recordAnswer(this.currentProblem, true);
+    window.badgeMaker.recordCorrect(this.currentProblem, {
+      firstTry: !this.problemHadMistake,
+      ms: Date.now() - this.problemStartedAt,
+      combo: this.comboCount,
+      boxBefore: this.currentProblem.box,
+      boxAfter: rec ? rec.box : this.currentProblem.box
+    });
 
     if (window.soundEngine) {
       window.soundEngine.playCorrect(this.comboCount);
@@ -525,6 +554,8 @@ class StarQuestApp {
 
     // Record incorrect answer in Leitner system (drops gently back to Box 1)
     window.mathEngine.recordAnswer(this.currentProblem, false);
+    window.badgeMaker.recordMistake(this.currentProblem);
+    this.problemHadMistake = true;
 
     // Playful gentle bounce
     this.challengeCard.classList.add('gentle-bounce');
@@ -624,17 +655,31 @@ class StarQuestApp {
       window.easterEggs.spawnGallopingUnicorn();
     }
 
-    const accuracy = this.sessionAttemptCount > 0
-      ? Math.round((this.sessionSolvedCount / this.sessionAttemptCount) * 100)
-      : 100;
-    this.celebSolved.textContent = this.sessionSolvedCount;
-    this.celebAccuracy.textContent = `${accuracy}%`;
-    this.celebStreak.textContent = `🔥 ${this.streak}`;
+    const minutes = Math.round(this.totalQuestSeconds / 60);
+    this.celebSubtitle.textContent = `You completed your ${minutes}-minute math quest for today!`;
 
     this.timerTitleEl.textContent = "Today's Quest Done! ⭐";
     this.timerSubEl.textContent = "New star added to your sky map!";
 
+    this.badgeReport = window.badgeMaker.buildReport({
+      streak: this.streak,
+      minutes,
+      buddy: this.buddies[this.currentBuddyIndex],
+      difficulty: window.mathEngine.settings.difficulty || 'medium'
+    });
+    window.badgeMaker.render(this.badgeCanvas, this.badgeReport);
+    window.badgeMaker.addToGallery(this.badgeReport);
+
     this.celebrationModal.classList.remove('hidden');
+  }
+
+  async saveBadge() {
+    if (!this.badgeReport) return;
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+    const saved = await window.badgeMaker.saveImage(this.badgeCanvas, this.badgeReport.date);
+    if (saved && window.easterEggs) {
+      window.easterEggs.showMascotMessage('💾 Badge saved! Show it off, Lyra! 🌟', 3000);
+    }
   }
 
   // =========================================================================
@@ -643,6 +688,7 @@ class StarQuestApp {
 
   openHelpModal() {
     if (!this.currentProblem) return;
+    window.badgeMaker.recordHelp();
     const data = window.mathEngine.getHelpExplanation(this.currentProblem);
     this.helpTitle.textContent = `✨ Breaking Down ${data.title}`;
     this.helpContentBody.innerHTML = '';
@@ -890,6 +936,67 @@ class StarQuestApp {
   }
 
   // =========================================================================
+  // Badge Gallery Modal
+  // =========================================================================
+
+  openGalleryModal() {
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+    this.showGalleryGrid();
+    this.galleryModal.classList.remove('hidden');
+  }
+
+  showGalleryGrid() {
+    const gallery = window.badgeMaker.getGallery();
+    this.galleryDetailView.classList.add('hidden');
+    this.galleryGridView.classList.remove('hidden');
+    this.galleryTitle.textContent = "🏅 Lyra's Badge Gallery";
+    this.galleryIntro.textContent = gallery.length === 0
+      ? 'Finish a daily quest to win your very first badge! It will shine right here. 🌟'
+      : `${gallery.length} badge${gallery.length === 1 ? '' : 's'} earned! Tap one to see it up close.`;
+
+    this.galleryGrid.innerHTML = '';
+    gallery.forEach(report => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = 'gallery-item';
+
+      const thumb = document.createElement('canvas');
+      window.badgeMaker.renderThumb(thumb, report);
+
+      const title = document.createElement('span');
+      title.className = 'gallery-item-title';
+      title.textContent = report.title;
+
+      const date = document.createElement('span');
+      date.className = 'gallery-item-date';
+      date.textContent = window.badgeMaker.prettyDate(report.date);
+
+      item.append(thumb, title, date);
+      item.addEventListener('click', () => this.showGalleryBadge(report));
+      this.galleryGrid.appendChild(item);
+    });
+  }
+
+  showGalleryBadge(report) {
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+    this.galleryReport = report;
+    this.galleryGridView.classList.add('hidden');
+    this.galleryDetailView.classList.remove('hidden');
+    this.galleryTitle.textContent = `🏅 ${report.title}`;
+    window.badgeMaker.render(this.galleryDetailCanvas, report);
+    this.galleryModal.querySelector('.modal-card').scrollTop = 0;
+  }
+
+  async saveGalleryBadge() {
+    if (!this.galleryReport) return;
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+    const saved = await window.badgeMaker.saveImage(this.galleryDetailCanvas, this.galleryReport.date);
+    if (saved && window.easterEggs) {
+      window.easterEggs.showMascotMessage('💾 Badge saved! Show it off, Lyra! 🌟', 3000);
+    }
+  }
+
+  // =========================================================================
   // Fact Mastery Garden Modal (Leitner System Visualization)
   // =========================================================================
 
@@ -1032,6 +1139,7 @@ class StarQuestApp {
       this.questCompletedToday = false;
       localStorage.setItem('lyra_quest_done_today', 'false');
       localStorage.removeItem('lyra_timer_remaining');
+      window.badgeMaker.reset();
       this.updateTimerDisplay();
       this.timerTitleEl.textContent = `Daily Goal: ${settings.dailyMinutes || 5} Minutes`;
       this.timerSubEl.textContent = "You got this, star explorer!";
