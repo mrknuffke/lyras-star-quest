@@ -1,21 +1,123 @@
 /**
- * Lyra's Star Quest - Math Engine
- * Adaptive fact generator with sticky difficulty presets (Easy / Medium / Challenge),
- * sticky single-operation selection (Just Adding, Just Subtracting, Just Multiplying, or Mixed),
- * spaced repetition queue, and visual manipulative models.
+ * Lyra's Star Quest - Math Engine with Kid-Friendly Leitner System
+ * 
+ * Leitner Mastery System:
+ * - Box 1: 🌱 Sprouting (New or recently struggled facts - seen 60% of the time)
+ * - Box 2: 🌿 Growing (Practicing facts - seen 25% of the time)
+ * - Box 3: 🌟 Mastered (Superstar facts - seen 15% of the time for confidence & retention)
+ * 
+ * Rules:
+ * - Correct answer advances consecutive streak: 2 correct moves to Box 2, 4 correct moves to Box 3!
+ * - Wrong answer drops gently back to Box 1 so she gets plenty of low-stress practice.
+ * - Commutative pairs (e.g. 6×7 and 7×6, 8+7 and 7+8) share mastery progression!
  */
+
+class LeitnerEngine {
+  constructor() {
+    this.storageKey = 'lyra_leitner_mastery_v2';
+    this.masteryMap = this.load();
+  }
+
+  load() {
+    try {
+      const saved = localStorage.getItem(this.storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {};
+  }
+
+  save() {
+    try {
+      localStorage.setItem(this.storageKey, JSON.stringify(this.masteryMap));
+    } catch (e) {}
+  }
+
+  getFactKey(opType, num1, num2) {
+    if (opType === 'mul' || opType === 'add') {
+      const low = Math.min(num1, num2);
+      const high = Math.max(num1, num2);
+      return `${opType}_${low}_${high}`;
+    }
+    return `${opType}_${num1}_${num2}`;
+  }
+
+  getRecord(factKey) {
+    if (!this.masteryMap[factKey]) {
+      this.masteryMap[factKey] = {
+        box: 1, // 1=Sprouting, 2=Growing, 3=Mastered
+        streak: 0,
+        correct: 0,
+        wrong: 0,
+        lastSeen: 0
+      };
+    }
+    return this.masteryMap[factKey];
+  }
+
+  recordAnswer(factKey, isCorrect) {
+    const rec = this.getRecord(factKey);
+    rec.lastSeen = Date.now();
+
+    if (isCorrect) {
+      rec.correct++;
+      rec.streak++;
+
+      // Advance boxes on consecutive correct answers
+      if (rec.box === 1 && rec.streak >= 2) {
+        rec.box = 2;
+      } else if (rec.box === 2 && rec.streak >= 4) {
+        rec.box = 3; // Mastered!
+      }
+    } else {
+      rec.wrong++;
+      rec.streak = 0;
+      // Gently return to Box 1 for more practice
+      rec.box = 1;
+    }
+
+    this.save();
+    return rec;
+  }
+
+  getBox(factKey) {
+    return this.getRecord(factKey).box;
+  }
+
+  // Summary counts for the Star Garden
+  getMasteryStats(activeKeys = null) {
+    let box1 = 0, box2 = 0, box3 = 0;
+    const keysToCheck = activeKeys || Object.keys(this.masteryMap);
+
+    keysToCheck.forEach(key => {
+      const box = this.getBox(key);
+      if (box === 3) box3++;
+      else if (box === 2) box2++;
+      else box1++;
+    });
+
+    return {
+      learning: box1,
+      growing: box2,
+      mastered: box3,
+      total: keysToCheck.length
+    };
+  }
+
+  resetAll() {
+    this.masteryMap = {};
+    this.save();
+  }
+}
 
 class MathEngine {
   constructor() {
-    this.recentMisses = []; // Queue for spaced re-testing of tricky facts
+    this.leitner = new LeitnerEngine();
     this.lastProblem = null;
-    
-    // Load sticky settings from localStorage
     this.settings = this.loadSettings();
   }
 
   loadSettings() {
-    const saved = localStorage.getItem('lyra_math_settings_v2');
+    const saved = localStorage.getItem('lyra_math_settings_v3');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -37,7 +139,7 @@ class MathEngine {
 
   saveSettings(newSettings) {
     this.settings = { ...this.settings, ...newSettings };
-    localStorage.setItem('lyra_math_settings_v2', JSON.stringify(this.settings));
+    localStorage.setItem('lyra_math_settings_v3', JSON.stringify(this.settings));
   }
 
   setOperation(op) {
@@ -60,168 +162,249 @@ class MathEngine {
     this.saveSettings(this.settings);
   }
 
-  // Generates next problem
-  generateProblem(mode = 'daily', labFilter = { op: 'mixed', table: 'all' }) {
-    // 1. Spaced Repetition Check: If we have a pending retry problem, 35% chance to re-test it
-    if (this.recentMisses.length > 0 && Math.random() < 0.35) {
-      const retryProblem = this.recentMisses.shift();
-      if (!this.lastProblem || retryProblem.id !== this.lastProblem.id) {
-        this.lastProblem = retryProblem;
-        return retryProblem;
-      } else {
-        this.recentMisses.push(retryProblem);
-      }
-    }
-
-    // 2. Determine Operation (based on sticky selection)
+  // Returns all possible problem candidates under the current settings
+  getCandidatePool(labFilter = null) {
     let op = this.settings.selectedOp || 'mixed';
-    if (mode === 'lab' && labFilter && labFilter.op) {
+    if (labFilter && labFilter.op) {
       op = labFilter.op;
     }
 
+    const opsToInclude = [];
     if (op === 'mixed') {
-      const pool = [];
-      if (this.settings.customOps.add) pool.push('add');
-      if (this.settings.customOps.sub) pool.push('sub');
-      if (this.settings.customOps.mul) pool.push('mul');
-      if (pool.length === 0) pool.push('mul');
-      op = pool[Math.floor(Math.random() * pool.length)];
+      if (this.settings.customOps.add) opsToInclude.push('add');
+      if (this.settings.customOps.sub) opsToInclude.push('sub');
+      if (this.settings.customOps.mul) opsToInclude.push('mul');
+      if (opsToInclude.length === 0) opsToInclude.push('mul');
+    } else {
+      opsToInclude.push(op);
     }
 
-    let problem;
+    const candidates = [];
+
+    // Generate multiplication candidates
+    if (opsToInclude.includes('mul')) {
+      let tables = this.settings.mulTables || [0, 1, 2, 3, 4, 5, 10];
+      if (labFilter && labFilter.table && labFilter.table !== 'all') {
+        const t = parseInt(labFilter.table, 10);
+        tables = t === 0 ? [0, 1] : [t];
+      }
+      const maxB = (this.settings.difficulty === 'gentle') ? 5 : ((this.settings.difficulty === 'challenge') ? 12 : 10);
+
+      tables.forEach(a => {
+        for (let b = 0; b <= maxB; b++) {
+          candidates.push({
+            opType: 'mul',
+            opSymbol: '×',
+            opName: 'Multiplication',
+            badgeIcon: '✖️',
+            num1: a,
+            num2: b,
+            answer: a * b,
+            factKey: this.leitner.getFactKey('mul', a, b)
+          });
+        }
+      });
+    }
+
+    // Generate addition candidates
+    if (opsToInclude.includes('add')) {
+      const diff = this.settings.difficulty;
+      if (diff === 'gentle') {
+        for (let a = 1; a <= 8; a++) {
+          for (let b = 1; b <= (10 - a); b++) {
+            candidates.push({
+              opType: 'add',
+              opSymbol: '+',
+              opName: 'Addition',
+              badgeIcon: '➕',
+              num1: a,
+              num2: b,
+              answer: a + b,
+              factKey: this.leitner.getFactKey('add', a, b)
+            });
+          }
+        }
+      } else if (diff === 'challenge') {
+        for (let a = 10; a <= 50; a += 3) {
+          for (let b = 4; b <= 30; b += 2) {
+            if (a + b <= 100) {
+              candidates.push({
+                opType: 'add',
+                opSymbol: '+',
+                opName: 'Addition',
+                badgeIcon: '➕',
+                num1: a,
+                num2: b,
+                answer: a + b,
+                factKey: this.leitner.getFactKey('add', a, b)
+              });
+            }
+          }
+        }
+      } else {
+        // Standard within 20
+        const maxSum = this.settings.addMaxSum || 20;
+        for (let a = 2; a <= 9; a++) {
+          for (let b = 2; b <= Math.min(9, maxSum - a); b++) {
+            candidates.push({
+              opType: 'add',
+              opSymbol: '+',
+              opName: 'Addition',
+              badgeIcon: '➕',
+              num1: a,
+              num2: b,
+              answer: a + b,
+              factKey: this.leitner.getFactKey('add', a, b)
+            });
+          }
+        }
+      }
+    }
+
+    // Generate subtraction candidates
+    if (opsToInclude.includes('sub')) {
+      const diff = this.settings.difficulty;
+      if (diff === 'gentle') {
+        for (let ans = 1; ans <= 7; ans++) {
+          for (let b = 1; b <= (10 - ans); b++) {
+            const a = ans + b;
+            candidates.push({
+              opType: 'sub',
+              opSymbol: '−',
+              opName: 'Subtraction',
+              badgeIcon: '➖',
+              num1: a,
+              num2: b,
+              answer: ans,
+              factKey: this.leitner.getFactKey('sub', a, b)
+            });
+          }
+        }
+      } else if (diff === 'challenge') {
+        for (let ans = 10; ans <= 60; ans += 4) {
+          for (let b = 5; b <= 35; b += 3) {
+            const a = ans + b;
+            candidates.push({
+              opType: 'sub',
+              opSymbol: '−',
+              opName: 'Subtraction',
+              badgeIcon: '➖',
+              num1: a,
+              num2: b,
+              answer: ans,
+              factKey: this.leitner.getFactKey('sub', a, b)
+            });
+          }
+        }
+      } else {
+        for (let ans = 2; ans <= 9; ans++) {
+          for (let b = 2; b <= 9; b++) {
+            const a = ans + b;
+            if (a <= (this.settings.addMaxSum || 20)) {
+              candidates.push({
+                opType: 'sub',
+                opSymbol: '−',
+                opName: 'Subtraction',
+                badgeIcon: '➖',
+                num1: a,
+                num2: b,
+                answer: ans,
+                factKey: this.leitner.getFactKey('sub', a, b)
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return candidates;
+  }
+
+  // Select next problem using Leitner weighted sampling:
+  // Box 1 (Sprouting/Struggled): 60% probability weight
+  // Box 2 (Growing):             25% probability weight
+  // Box 3 (Mastered):            15% probability weight
+  generateProblem(mode = 'daily', labFilter = null) {
+    const pool = this.getCandidatePool(labFilter);
+    if (pool.length === 0) {
+      return {
+        id: 'fallback_1x1',
+        opType: 'mul',
+        opSymbol: '×',
+        opName: 'Multiplication',
+        badgeIcon: '✖️',
+        num1: 2,
+        num2: 2,
+        answer: 4,
+        expectedLength: 1,
+        factKey: 'mul_2_2',
+        box: 1
+      };
+    }
+
+    // Separate into Leitner boxes
+    const box1 = [];
+    const box2 = [];
+    const box3 = [];
+
+    pool.forEach(item => {
+      const box = this.leitner.getBox(item.factKey);
+      item.box = box;
+      if (box === 3) box3.push(item);
+      else if (box === 2) box2.push(item);
+      else box1.push(item);
+    });
+
+    // Roll weighted probability
+    const roll = Math.random();
+    let chosenList = box1;
+
+    if (roll < 0.60 && box1.length > 0) {
+      chosenList = box1;
+    } else if (roll < 0.85 && box2.length > 0) {
+      chosenList = box2;
+    } else if (box3.length > 0) {
+      chosenList = box3;
+    } else if (box1.length > 0) {
+      chosenList = box1;
+    } else if (box2.length > 0) {
+      chosenList = box2;
+    } else {
+      chosenList = pool;
+    }
+
+    // Pick random from chosen box, avoiding immediate repetition
+    let selected;
     let attempts = 0;
     do {
-      if (op === 'mul') {
-        problem = this.generateMultiplication(labFilter);
-      } else if (op === 'add') {
-        problem = this.generateAddition();
-      } else {
-        problem = this.generateSubtraction();
-      }
+      selected = chosenList[Math.floor(Math.random() * chosenList.length)];
       attempts++;
-    } while (this.lastProblem && problem.id === this.lastProblem.id && attempts < 10);
+    } while (this.lastProblem && selected.factKey === this.lastProblem.factKey && attempts < 10 && chosenList.length > 1);
 
-    this.lastProblem = problem;
-    return problem;
+    // Randomize commutative display (e.g. 6x7 vs 7x6)
+    if (selected.opType === 'mul' || selected.opType === 'add') {
+      if (Math.random() > 0.5) {
+        const temp = selected.num1;
+        selected.num1 = selected.num2;
+        selected.num2 = temp;
+      }
+    }
+
+    selected.id = `${selected.opType}_${selected.num1}_${selected.num2}`;
+    selected.expectedLength = String(selected.answer).length;
+    this.lastProblem = selected;
+
+    return selected;
   }
 
-  generateMultiplication(labFilter) {
-    let allowedTables = this.settings.mulTables;
-    if (!allowedTables || allowedTables.length === 0) {
-      allowedTables = [0, 1, 2, 3, 4, 5, 10];
-    }
-
-    if (labFilter && labFilter.table && labFilter.table !== 'all') {
-      const selectedT = parseInt(labFilter.table, 10);
-      allowedTables = selectedT === 0 ? [0, 1] : [selectedT];
-    }
-
-    // In challenge mode, give higher weight to trickier tables (6, 7, 8, 9, 12)
-    let a;
-    if (this.settings.difficulty === 'challenge' && Math.random() < 0.65) {
-      const hardPool = [6, 7, 8, 9, 11, 12].filter(n => allowedTables.includes(n));
-      a = hardPool.length > 0 ? hardPool[Math.floor(Math.random() * hardPool.length)] : allowedTables[Math.floor(Math.random() * allowedTables.length)];
-    } else {
-      a = allowedTables[Math.floor(Math.random() * allowedTables.length)];
-    }
-
-    const maxB = (this.settings.difficulty === 'gentle') ? 5 : ((this.settings.difficulty === 'challenge') ? 12 : 10);
-    const b = Math.floor(Math.random() * (maxB + 1));
-
-    const swap = Math.random() > 0.5;
-    const num1 = swap ? b : a;
-    const num2 = swap ? a : b;
-    const answer = num1 * num2;
-
-    return {
-      id: `mul_${num1}x${num2}`,
-      opType: 'mul',
-      opSymbol: '×',
-      opName: 'Multiplication',
-      badgeIcon: '✖️',
-      num1,
-      num2,
-      answer,
-      expectedLength: String(answer).length
-    };
-  }
-
-  generateAddition() {
-    const diff = this.settings.difficulty;
-    let num1, num2, answer;
-
-    if (diff === 'gentle') {
-      // Within 10
-      num1 = Math.floor(Math.random() * 8) + 1; // 1 to 8
-      num2 = Math.floor(Math.random() * (10 - num1)) + 1;
-    } else if (diff === 'challenge') {
-      // Challenge: 2-digit + 1-digit, or sums up to 100
-      num1 = Math.floor(Math.random() * 45) + 12;
-      num2 = Math.floor(Math.random() * 25) + 4;
-    } else {
-      // Grade 3 Standard (Medium): sums crossing 10 within 20 (e.g. 8+7, 9+5, 6+8)
-      num1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
-      const rem = Math.min(9, (this.settings.addMaxSum || 20) - num1);
-      num2 = Math.floor(Math.random() * (rem - 1)) + 2;
-    }
-
-    answer = num1 + num2;
-    return {
-      id: `add_${num1}+${num2}`,
-      opType: 'add',
-      opSymbol: '+',
-      opName: 'Addition',
-      badgeIcon: '➕',
-      num1,
-      num2,
-      answer,
-      expectedLength: String(answer).length
-    };
-  }
-
-  generateSubtraction() {
-    const diff = this.settings.difficulty;
-    let num1, num2, answer;
-
-    if (diff === 'gentle') {
-      // Facts within 10
-      answer = Math.floor(Math.random() * 6) + 1; // 1 to 6
-      num2 = Math.floor(Math.random() * (10 - answer)) + 1;
-      num1 = answer + num2;
-    } else if (diff === 'challenge') {
-      // Two-digit subtraction
-      num1 = Math.floor(Math.random() * 60) + 20;
-      num2 = Math.floor(Math.random() * (num1 - 8)) + 3;
-      answer = num1 - num2;
-    } else {
-      // Standard: Facts within 20 crossing 10 (e.g. 15-7, 14-8, 13-6)
-      answer = Math.floor(Math.random() * 8) + 2;
-      num2 = Math.floor(Math.random() * 8) + 2;
-      num1 = answer + num2;
-    }
-
-    return {
-      id: `sub_${num1}-${num2}`,
-      opType: 'sub',
-      opSymbol: '−',
-      opName: 'Subtraction',
-      badgeIcon: '➖',
-      num1,
-      num2,
-      answer,
-      expectedLength: String(answer).length
-    };
-  }
-
-  recordStruggle(problem) {
-    if (!this.recentMisses.some(p => p.id === problem.id)) {
-      this.recentMisses.push(problem);
-    }
+  // Called when Lyra answers
+  recordAnswer(problem, isCorrect) {
+    if (!problem || !problem.factKey) return;
+    return this.leitner.recordAnswer(problem.factKey, isCorrect);
   }
 
   getHelpExplanation(problem) {
     const { opType, num1, num2, answer } = problem;
-
     if (opType === 'mul') {
       return this.getMultiplicationHelp(num1, num2, answer);
     } else if (opType === 'add') {
@@ -293,7 +476,6 @@ class MathEngine {
 
   getSubtractionHelp(a, b, ans) {
     const tip = `💡 Think Addition: What number plus ${b} makes ${a}? (${b} + ${ans} = ${a})!`;
-
     return {
       type: 'sub',
       title: `${a} − ${b}`,

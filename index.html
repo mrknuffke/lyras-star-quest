@@ -114,6 +114,13 @@
           <span class="stat-value" id="starsEarned">0</span>
         </div>
 
+        <!-- Fact Mastery Garden (Leitner System Counter) -->
+        <button id="masteryGardenBtn" class="stat-pill garden-pill" title="View Fact Mastery Garden!">
+          <span class="stat-icon">🌱</span>
+          <span class="stat-value" id="gardenCount">0</span>
+          <span class="stat-label">Mastered</span>
+        </button>
+
         <!-- Actions -->
         <div class="header-actions">
           <button id="constellationBtn" class="icon-btn" title="View Sky Constellation" aria-label="Constellation map">
@@ -198,10 +205,11 @@
         <span class="star-sparkle sparkle-2">★</span>
         <span class="star-sparkle sparkle-3">🐱</span>
 
-        <!-- Operation Badge -->
+        <!-- Operation Badge with Leitner Box status -->
         <div class="op-badge" id="opBadge">
           <span id="opBadgeIcon">✖️</span>
           <span id="opBadgeText">Multiplication</span>
+          <span id="leitnerBoxBadge" class="leitner-box-indicator">🌱 Learning</span>
         </div>
 
         <!-- The Math Problem Equation -->
@@ -217,7 +225,7 @@
           </div>
         </div>
 
-        <!-- Feedback & Encouragement Banner (Celebrates mistakes with growth mindset!) -->
+        <!-- Feedback & Encouragement Banner (Celebrates mistakes gently with zero red/shaking!) -->
         <div class="feedback-banner" id="feedbackBanner" aria-live="polite"></div>
 
         <!-- Quick Help Bar -->
@@ -306,6 +314,39 @@
       </div>
     </div>
 
+    <!-- Fact Mastery Garden Modal (Leitner Tracking) -->
+    <div class="modal-backdrop hidden" id="gardenModal" role="dialog" aria-modal="true">
+      <div class="modal-card garden-card">
+        <div class="modal-header">
+          <h3>🌱 Lyra's Fact Mastery Garden</h3>
+          <button class="modal-close-btn" id="closeGardenBtn" aria-label="Close garden">✕</button>
+        </div>
+        <p class="constellation-intro">Every fact grows as you practice! Getting them right moves them from 🌱 Sprouting to 🌿 Growing to 🌟 Mastered!</p>
+        
+        <div class="garden-stats-row">
+          <div class="garden-stat-box stat-learning">
+            <span class="garden-box-num" id="gardenLearningCount">0</span>
+            <span class="garden-box-lbl">🌱 Sprouting (Practicing Often)</span>
+          </div>
+          <div class="garden-stat-box stat-growing">
+            <span class="garden-box-num" id="gardenGrowingCount">0</span>
+            <span class="garden-box-lbl">🌿 Growing (Almost There!)</span>
+          </div>
+          <div class="garden-stat-box stat-mastered">
+            <span class="garden-box-num" id="gardenMasteredCount">0</span>
+            <span class="garden-box-lbl">🌟 Mastered (Superstars!)</span>
+          </div>
+        </div>
+
+        <div class="setting-section-title">🌟 Mastered Superstar Facts:</div>
+        <div class="garden-facts-scroll" id="gardenMasteredList"></div>
+
+        <div class="modal-footer">
+          <button class="pill-btn primary-btn" id="closeGardenOkBtn">Keep Growing Facts! 💫</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Constellation Sky Modal -->
     <div class="modal-backdrop hidden" id="constellationModal" role="dialog" aria-modal="true">
       <div class="modal-card constellation-card">
@@ -335,7 +376,6 @@
         </div>
         
         <div class="settings-body">
-          <!-- Difficulty Preset Picker -->
           <div class="setting-section-title">Difficulty Level (Sticky):</div>
           <div class="setting-row">
             <select id="modalDifficultySelect" class="styled-select" style="width: 100%;">
@@ -346,7 +386,6 @@
             </select>
           </div>
 
-          <!-- Companion Picker -->
           <div class="setting-section-title">Choose Lyra's Buddy:</div>
           <div class="setting-row">
             <select id="modalBuddySelect" class="styled-select" style="width: 100%;">

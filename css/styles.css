@@ -296,6 +296,17 @@ button {
   border-color: rgba(255, 209, 102, 0.4);
 }
 
+.garden-pill {
+  border-color: rgba(6, 214, 160, 0.4);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.garden-pill:hover {
+  background: rgba(6, 214, 160, 0.15);
+  transform: translateY(-1px);
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -536,7 +547,7 @@ button {
 }
 
 /* ==========================================================================
-   Main Game Board & Challenge Card
+   Main Game Board & Challenge Card (GENTLE, NO RED, NO SHAKING)
    ========================================================================== */
 .game-board {
   flex: 1;
@@ -559,19 +570,21 @@ button {
   flex-direction: column;
   align-items: center;
   overflow: hidden;
-  transition: border-color 0.3s, box-shadow 0.3s;
+  transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.3s ease;
 }
 
+/* Correct Answer: Uplifting Green/Cyan Glow */
 .challenge-card.correct-flash {
   animation: flashSuccess 0.55s ease;
   border-color: var(--accent-green);
   box-shadow: 0 0 45px rgba(6, 214, 160, 0.6);
 }
 
-/* Friendly playful bounce on mistakes */
-.challenge-card.gentle-bounce {
-  animation: bounceGentle 0.45s ease;
+/* Mistake: COMPLETELY GENTLE! Soft pastel gold starlight glow, NO red, NO shaking */
+.challenge-card.gentle-mistake {
+  animation: gentleBreathe 0.5s ease;
   border-color: var(--accent-gold);
+  box-shadow: 0 0 35px rgba(255, 209, 102, 0.45);
 }
 
 @keyframes flashSuccess {
@@ -580,11 +593,10 @@ button {
   100% { transform: scale(1); }
 }
 
-@keyframes bounceGentle {
+@keyframes gentleBreathe {
   0% { transform: scale(1); }
-  35% { transform: scale(0.97) translateY(4px); }
-  70% { transform: scale(1.02) translateY(-2px); }
-  100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.015); }
+  100% { transform: scale(1); }
 }
 
 /* Sparkle accents */
@@ -618,6 +630,12 @@ button {
   font-weight: 700;
   color: var(--accent-gold);
   margin-bottom: 8px;
+}
+
+.leitner-box-indicator {
+  font-size: 0.75rem;
+  color: var(--accent-cyan);
+  margin-left: 4px;
 }
 
 /* Equation Display */
@@ -664,12 +682,17 @@ button {
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.5), 0 0 16px rgba(0, 245, 212, 0.35);
   outline: none;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
 }
 
 .answer-slot:focus {
   border-color: var(--accent-gold);
   box-shadow: inset 0 2px 8px rgba(0,0,0,0.5), 0 0 22px rgba(255, 209, 102, 0.6);
+}
+
+.answer-slot.gentle-mistake {
+  border-color: var(--accent-gold);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5), 0 0 20px rgba(255, 209, 102, 0.5);
 }
 
 .blinking-cursor {
@@ -687,32 +710,33 @@ button {
   50% { opacity: 0; }
 }
 
-/* Feedback & Encouragement Banner (Celebrates Mistakes!) */
+/* Feedback & Encouragement Banner (Celebrates Mistakes with Warmth!) */
 .feedback-banner {
   min-height: 28px;
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   text-align: center;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: opacity 0.25s, transform 0.25s;
+  padding: 0 8px;
 }
 
 .feedback-banner.success {
   color: var(--accent-green);
-  text-shadow: 0 0 10px rgba(6, 214, 160, 0.5);
-  animation: bounceText 0.4s ease;
+  text-shadow: 0 0 12px rgba(6, 214, 160, 0.6);
+  animation: gentleFadeIn 0.35s ease;
 }
 
+/* Gentle Pastel Encouragement - No Red, Warm Gold */
 .feedback-banner.mistake-cheer {
   color: var(--accent-gold);
   text-shadow: 0 0 12px rgba(255, 209, 102, 0.6);
-  animation: bounceText 0.4s ease;
+  animation: gentleFadeIn 0.35s ease;
 }
 
-@keyframes bounceText {
-  0% { transform: scale(0.85); }
-  60% { transform: scale(1.12); }
-  100% { transform: scale(1); }
+@keyframes gentleFadeIn {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: translateY(0); }
 }
 
 /* Quick Help Button */
@@ -876,7 +900,7 @@ kbd {
 }
 
 /* ==========================================================================
-   Modals & Overlays
+   Modals & Fact Mastery Garden
    ========================================================================== */
 .modal-backdrop {
   position: fixed;
@@ -951,6 +975,116 @@ kbd {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* Star Garden Modal Styling */
+.garden-card {
+  max-width: 560px;
+}
+
+.garden-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.garden-stat-box {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-md);
+  padding: 10px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.garden-stat-box.stat-learning {
+  border-color: rgba(255, 209, 102, 0.4);
+}
+.garden-stat-box.stat-growing {
+  border-color: rgba(56, 189, 248, 0.4);
+}
+.garden-stat-box.stat-mastered {
+  border-color: rgba(6, 214, 160, 0.5);
+  background: rgba(6, 214, 160, 0.1);
+}
+
+.garden-box-num {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.garden-box-lbl {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.garden-facts-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.garden-fact-chip {
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.garden-fact-chip.chip-mastered {
+  background: rgba(6, 214, 160, 0.2);
+  border: 1px solid var(--accent-green);
+  color: #a7f3d0;
+}
+
+.garden-fact-chip.chip-growing {
+  background: rgba(56, 189, 248, 0.2);
+  border: 1px solid var(--accent-cyan);
+  color: #bae6fd;
+}
+
+.garden-fact-chip.chip-learning {
+  background: rgba(255, 209, 102, 0.15);
+  border: 1px solid var(--accent-gold);
+  color: #fef08a;
+}
+
+.garden-fact-tag {
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(6, 214, 160, 0.2);
+  border: 1px solid var(--accent-green);
+  color: #a7f3d0;
+}
+
+.garden-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  padding: 20px 10px;
+  font-style: italic;
 }
 
 /* ==========================================================================

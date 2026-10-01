@@ -1,6 +1,7 @@
 /**
  * Lyra's Star Quest - Easter Eggs, Silliness & Creature Animations
- * Galloping unicorns, floating space cats, silly mascot hats, and secret words.
+ * Galloping unicorns, floating space cats, silly mascot hats, secret words,
+ * and a rich library of gentle, encouraging growth-mindset praises.
  */
 
 class EasterEggController {
@@ -8,7 +9,6 @@ class EasterEggController {
     this.canvas = document.getElementById('confettiCanvas');
     this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
     this.particles = [];
-    this.floatingCreatures = [];
     this.isPartyMode = false;
     this.partyTimer = null;
     this.mascotTapCount = 0;
@@ -32,6 +32,47 @@ class EasterEggController {
       'galaxy': () => this.triggerGalaxyShower(),
       'star': () => this.burstConfetti(80)
     };
+
+    // 35+ diverse, gentle, warm, buddy-specific growth mindset encouragements
+    this.mistakeEncouragements = [
+      "🌱 Brain stretch! That was a super courageous try!",
+      "🦄 Celeste says: 'Every guess makes your magical horn glow brighter!'",
+      "🐱 Barnaby purrs: 'Pawsome try! You are super close!'",
+      "🌈 Sparkle says: 'Mistakes are just starlight magic in progress!'",
+      "⭐ Nova twinkles: 'Whoa, that expanded your brain galaxy!'",
+      "💡 Ooh, nice thinking! Tap 'Show Me' if you want a peek!",
+      "💖 Celeste sends you a warm unicorn rainbow hug!",
+      "🐾 High-four from Barnaby! You've totally got this!",
+      "🎈 No worries at all! Trying hard things is how we level up!",
+      "🧠 Fun brain fact: your neurons just grew stronger!",
+      "🚀 Zooming closer to the answer! Take another crack at it!",
+      "🥞 Barnaby thinks: 'Even pancakes flip over! Let's try again!'",
+      "✨ Almost there, star explorer! You're in the neighborhood!",
+      "🌟 Super math bravery! Let's solve it together!",
+      "🎨 Think of this like a practice sketch before the masterpiece!",
+      "🪄 Wave your magic math wand and give it another spin!",
+      "🥨 A fun little brain twist! That's how we get stronger!",
+      "🌺 Like a starlight flower blooming, your skills are growing!",
+      "🍪 Barnaby offers you a lucky space cookie! Try again!",
+      "🦄 Unicorn secret: tricky questions make the best triumphs!",
+      "🎯 Right around the target! Take another shot!",
+      "🧩 Puzzle pieces are clicking into place! Try once more!",
+      "🌈 Rainbow power recharged! What do you think it is?",
+      "🦋 Fluttering closer and closer to the right answer!",
+      "🐱 Barnaby says: 'I believe in you with all 9 of my lives!'",
+      "🌟 You are doing so amazing, Lyra! Keep shining!",
+      "🔮 The cosmic crystal ball says... you are super close!",
+      "🐾 Paws, take a breath, and give it another go!",
+      "💫 Learning mode activated! You're doing wonderful!",
+      "🌱 Every mistake is a seed for a brand new star!",
+      "🦄 Unicorns never give up, and neither do you!",
+      "🚀 Three, two, one... ready for your next try!",
+      "💖 You are so smart and so loved! You can do this!",
+      "🐱 Barnaby is doing a happy tail wag for your effort!",
+      "✨ Big brain power! Give it one more whirl!"
+    ];
+
+    this.lastEncouragementIndex = -1;
 
     this.initCanvas();
     this.setupListeners();
@@ -60,14 +101,12 @@ class EasterEggController {
         }
         this.lastMascotTap = now;
 
-        // Cycle funny silly accessories / hats
         this.cycleMascotHat();
 
         if (this.mascotTapCount >= 5) {
           this.mascotTapCount = 0;
           this.triggerPartyMode();
         } else {
-          // Play animal voice depending on buddy
           const activeBuddy = window.app ? window.app.currentBuddy : 'unicorn';
           if (activeBuddy === 'cat' && window.soundEngine) {
             window.soundEngine.playCatMeow();
@@ -79,7 +118,6 @@ class EasterEggController {
       });
     }
 
-    // Keyboard listener for Konami code and secret words
     window.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
@@ -126,28 +164,26 @@ class EasterEggController {
 
   getRandomSillyMessage() {
     const messages = [
-      "🦄 *Neigh!* Unicorn power is with you, Lyra!",
+      "🦄 *Neigh!* Unicorn starlight power is with you, Lyra!",
       "🐱 *Purrrrr* You are pawsitively awesome!",
-      "✨ Did you know 7 × 8 is a galaxy secret?",
+      "✨ Did you know 7 × 8 is 56? Secret galaxy fact!",
       "🌈 Brain muscles expanding at warp speed!",
-      "🐾 Cat high-five! High-four? Whatever, good job!",
-      "🥞 Silly thought: what if stars were made of pancakes?",
+      "🐾 Cat high-five! High-four? Whatever, amazing job!",
+      "🥞 Silly thought: what if stars were made of warm pancakes?",
       "🚀 We are zooming straight toward Math Mastery!"
     ];
     return messages[Math.floor(Math.random() * messages.length)];
   }
 
-  // Celebratory encouragement for mistakes
+  // Returns a fresh, diverse growth-mindset message every time
   getMistakeEncouragement() {
-    const praises = [
-      "🌱 Brain stretch! Mistakes grow your neurons!",
-      "🦄 Super guess, Lyra! Unicorns love learning!",
-      "🐱 Pawsome try! Take a peek at 'Show Me' 💡",
-      "✨ So close! Trying makes your math superpower grow!",
-      "💫 High five for tackling tough questions! Try again!",
-      "🌈 Mistakes are just practice in disguise!"
-    ];
-    return praises[Math.floor(Math.random() * praises.length)];
+    let newIndex;
+    do {
+      newIndex = Math.floor(Math.random() * this.mistakeEncouragements.length);
+    } while (newIndex === this.lastEncouragementIndex && this.mistakeEncouragements.length > 1);
+
+    this.lastEncouragementIndex = newIndex;
+    return this.mistakeEncouragements[newIndex];
   }
 
   showMascotMessage(text, duration = 3500) {
@@ -192,7 +228,6 @@ class EasterEggController {
     }
   }
 
-  // Galloping Unicorn animation across screen
   spawnGallopingUnicorn() {
     if (window.soundEngine) window.soundEngine.playUnicornSparkle();
     this.showMascotMessage("🦄 Look! A wild magical unicorn appeared! ✨", 3000);
@@ -212,7 +247,6 @@ class EasterEggController {
     this.burstConfetti(60, ['#f72585', '#7209b7', '#00f5d4', '#ffd166', '#ffffff']);
   }
 
-  // Flying Space Cat animation across screen
   spawnFlyingCat() {
     if (window.soundEngine) window.soundEngine.playCatMeow();
     this.showMascotMessage("🐱 *Meow!* Space Cat is floating past! 🪐", 3000);
@@ -237,32 +271,32 @@ class EasterEggController {
     this.burstConfetti(120, ['#00f5d4', '#7209b7', '#f72585', '#ffd166', '#ffffff']);
   }
 
-  // Particle explosion
+  // Gentle particle explosion (hearts, stars, pastels)
   burstConfetti(count = 60, customColors = null) {
     if (!this.canvas) return;
     const colors = customColors || [
-      '#ffd166', '#06d6a0', '#118ab2', '#f72585', '#7209b7', '#00f5d4', '#ff70a6', '#ffffff'
+      '#ffd166', '#06d6a0', '#f472b6', '#a855f7', '#00f5d4', '#fde047', '#ffffff'
     ];
     const originX = window.innerWidth / 2;
     const originY = window.innerHeight * 0.45;
 
     for (let i = 0; i < count; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 9 + 4;
+      const speed = Math.random() * 8 + 3;
       this.particles.push({
         x: originX + (Math.random() - 0.5) * 80,
         y: originY + (Math.random() - 0.5) * 40,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - 3,
         color: colors[Math.floor(Math.random() * colors.length)],
-        size: Math.random() * 8 + 4,
+        size: Math.random() * 7 + 4,
         rotation: Math.random() * 360,
         rotSpeed: (Math.random() - 0.5) * 10,
         opacity: 1,
         life: 1,
-        decay: Math.random() * 0.012 + 0.008,
+        decay: Math.random() * 0.014 + 0.008,
         isStar: Math.random() > 0.35,
-        isHeart: Math.random() > 0.75
+        isHeart: Math.random() > 0.7
       });
     }
   }
@@ -276,7 +310,7 @@ class EasterEggController {
           const p = this.particles[i];
           p.x += p.vx;
           p.y += p.vy;
-          p.vy += 0.22;
+          p.vy += 0.20;
           p.vx *= 0.985;
           p.rotation += p.rotSpeed;
           p.life -= p.decay;

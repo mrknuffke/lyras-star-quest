@@ -77,6 +77,7 @@ class StarQuestApp {
     this.opBadge = document.getElementById('opBadge');
     this.opBadgeIcon = document.getElementById('opBadgeIcon');
     this.opBadgeText = document.getElementById('opBadgeText');
+    this.leitnerBoxBadge = document.getElementById('leitnerBoxBadge');
     this.firstNumEl = document.getElementById('firstNum');
     this.secondNumEl = document.getElementById('secondNum');
     this.mathOpEl = document.getElementById('mathOp');
@@ -107,6 +108,17 @@ class StarQuestApp {
     this.constellationCanvas = document.getElementById('constellationCanvas');
     this.constellationDaysCount = document.getElementById('constellationDaysCount');
     this.currentRankBadge = document.getElementById('currentRankBadge');
+
+    // Fact Mastery Garden Modal (Leitner tracking)
+    this.masteryGardenBtn = document.getElementById('masteryGardenBtn');
+    this.gardenCountEl = document.getElementById('gardenCount');
+    this.gardenModal = document.getElementById('gardenModal');
+    this.closeGardenBtn = document.getElementById('closeGardenBtn');
+    this.closeGardenOkBtn = document.getElementById('closeGardenOkBtn');
+    this.gardenLearningCount = document.getElementById('gardenLearningCount');
+    this.gardenGrowingCount = document.getElementById('gardenGrowingCount');
+    this.gardenMasteredCount = document.getElementById('gardenMasteredCount');
+    this.gardenMasteredList = document.getElementById('gardenMasteredList');
 
     this.settingsModal = document.getElementById('settingsModal');
     this.closeSettingsBtn = document.getElementById('closeSettingsBtn');
@@ -292,6 +304,17 @@ class StarQuestApp {
     this.constellationBtn.addEventListener('click', () => this.openConstellationModal());
     this.closeConstellationBtn.addEventListener('click', () => this.closeConstellationModal());
 
+    // Fact Mastery Garden Modal
+    if (this.masteryGardenBtn) {
+      this.masteryGardenBtn.addEventListener('click', () => this.openGardenModal());
+    }
+    if (this.closeGardenBtn) {
+      this.closeGardenBtn.addEventListener('click', () => this.closeGardenModal());
+    }
+    if (this.closeGardenOkBtn) {
+      this.closeGardenOkBtn.addEventListener('click', () => this.closeGardenModal());
+    }
+
     // Settings Modal
     this.settingsBtn.addEventListener('click', () => this.openSettingsModal());
     this.closeSettingsBtn.addEventListener('click', () => this.closeSettingsModal());
@@ -380,6 +403,7 @@ class StarQuestApp {
     this.celebrationModal.classList.add('hidden');
     this.constellationModal.classList.add('hidden');
     this.settingsModal.classList.add('hidden');
+    if (this.gardenModal) this.gardenModal.classList.add('hidden');
   }
 
   // =========================================================================
@@ -395,6 +419,7 @@ class StarQuestApp {
 
     this.currentProblem = window.mathEngine.generateProblem('daily');
     this.renderProblem();
+    this.updateMasteryCount();
   }
 
   renderProblem() {
@@ -404,6 +429,12 @@ class StarQuestApp {
     this.mathOpEl.textContent = p.opSymbol;
     this.opBadgeIcon.textContent = p.badgeIcon;
     this.opBadgeText.textContent = p.opName;
+
+    // Show Leitner box status on the problem badge
+    if (this.leitnerBoxBadge) {
+      const boxLabels = { 1: '🌱 Learning', 2: '🌿 Growing', 3: '🌟 Mastered' };
+      this.leitnerBoxBadge.textContent = boxLabels[p.box] || '🌱 Learning';
+    }
   }
 
   handleKeyInput(key) {
@@ -414,11 +445,7 @@ class StarQuestApp {
         this.inputBuffer += key;
         this.answerTextEl.textContent = this.inputBuffer;
         if (window.soundEngine) window.soundEngine.playKeyClick();
-
-        // Auto-check when reaching expected length
-        if (this.inputBuffer.length === this.currentProblem.expectedLength) {
-          this.checkAnswer();
-        }
+        // No auto-check — Lyra must always press GO/Enter
       }
     } else if (key === 'Backspace') {
       if (this.inputBuffer.length > 0) {
@@ -458,6 +485,9 @@ class StarQuestApp {
     localStorage.setItem('lyra_stars_today', this.starsToday);
     localStorage.setItem('lyra_stars_date', todayStr);
 
+    // Record correct answer in Leitner system
+    window.mathEngine.recordAnswer(this.currentProblem, true);
+
     if (window.soundEngine) {
       window.soundEngine.playCorrect(this.comboCount);
     }
@@ -493,8 +523,8 @@ class StarQuestApp {
       window.soundEngine.playEncourageBoing();
     }
 
-    // Spaced repetition queue
-    window.mathEngine.recordStruggle(this.currentProblem);
+    // Record incorrect answer in Leitner system (drops gently back to Box 1)
+    window.mathEngine.recordAnswer(this.currentProblem, false);
 
     // Playful gentle bounce
     this.challengeCard.classList.add('gentle-bounce');
@@ -857,6 +887,61 @@ class StarQuestApp {
       if (this.constellationDays >= r.days) userRank = r.title;
     }
     this.currentRankBadge.textContent = userRank;
+  }
+
+  // =========================================================================
+  // Fact Mastery Garden Modal (Leitner System Visualization)
+  // =========================================================================
+
+  updateMasteryCount() {
+    const stats = window.mathEngine.leitner.getMasteryStats();
+    if (this.gardenCountEl) {
+      this.gardenCountEl.textContent = stats.mastered;
+    }
+  }
+
+  openGardenModal() {
+    if (!this.gardenModal) return;
+    const stats = window.mathEngine.leitner.getMasteryStats();
+
+    if (this.gardenLearningCount) this.gardenLearningCount.textContent = stats.learning;
+    if (this.gardenGrowingCount) this.gardenGrowingCount.textContent = stats.growing;
+    if (this.gardenMasteredCount) this.gardenMasteredCount.textContent = stats.mastered;
+
+    // Populate mastered facts list
+    if (this.gardenMasteredList) {
+      this.gardenMasteredList.innerHTML = '';
+      const mastery = window.mathEngine.leitner.masteryMap;
+      const masteredFacts = Object.entries(mastery)
+        .filter(([, rec]) => rec.box === 3)
+        .map(([key]) => {
+          const parts = key.split('_');
+          const opType = parts[0];
+          const a = parts[1];
+          const b = parts[2];
+          const symbols = { mul: '×', add: '+', sub: '−' };
+          const sym = symbols[opType] || '?';
+          return `${a} ${sym} ${b}`;
+        });
+
+      if (masteredFacts.length === 0) {
+        this.gardenMasteredList.innerHTML = '<p class="garden-empty">Keep practicing! Your mastered facts will bloom here! 🌱</p>';
+      } else {
+        masteredFacts.forEach(fact => {
+          const tag = document.createElement('span');
+          tag.className = 'garden-fact-tag';
+          tag.textContent = `🌟 ${fact}`;
+          this.gardenMasteredList.appendChild(tag);
+        });
+      }
+    }
+
+    this.gardenModal.classList.remove('hidden');
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+  }
+
+  closeGardenModal() {
+    if (this.gardenModal) this.gardenModal.classList.add('hidden');
   }
 
   // =========================================================================
