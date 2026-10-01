@@ -6,4 +6,4 @@ Leitner), multi-select drills (mul tables; add/sub strategy groups in DRILL_GROU
 math-engine.js; was UTC). Repo/URL kept as lyras-star-quest on purpose. sw cache v6.
 **In progress:** nothing.
 **Next step:** David checks the iPad: welcome card (type name), drills, hint lock, badge Save.
-Known: landscape iPad keypad ~10px off-screen (pre-existing). No npm preflight in this repo.
+Landscape iPads use a side-by-side layout (card left, keypad right; sw v7). No npm preflight in this repo.

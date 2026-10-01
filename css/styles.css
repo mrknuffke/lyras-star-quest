@@ -1781,6 +1781,58 @@ kbd {
   }
 }
 
+/* Sideways iPad (landscape, short screen): math window left, keypad right, so everything fits
+   without scrolling and the math window stays big. Upright iPads and phones keep the stacked layout. */
+@media (orientation: landscape) and (min-width: 900px) and (max-height: 900px) {
+  .app-container {
+    max-width: 1100px;
+    padding-top: 10px;
+  }
+
+  .game-board {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .challenge-card {
+    justify-content: center;
+    padding: 24px 24px 18px;
+  }
+
+  .math-num, .math-operator, .math-equals {
+    font-size: 4.4rem;
+  }
+
+  .answer-slot {
+    min-width: 130px;
+    height: 92px;
+    font-size: 4rem;
+  }
+
+  .blinking-cursor {
+    height: 52px;
+  }
+
+  .feedback-banner {
+    font-size: 1.15rem;
+  }
+
+  .keypad-container {
+    max-width: none;
+    align-content: center;
+  }
+
+  .key-btn {
+    height: 62px;
+  }
+
+  .desktop-hint {
+    grid-column: 1 / -1;
+  }
+}
+
 .hidden {
   display: none !important;
 }

@@ -1,5 +1,5 @@
 // Service Worker for Star Quest (Offline PWA)
-const CACHE_NAME = 'lyras-star-quest-v6';
+const CACHE_NAME = 'lyras-star-quest-v7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
