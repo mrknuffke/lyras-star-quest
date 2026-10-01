@@ -5,4 +5,5 @@ squad adds Derpy 🐯 / Brainy 🧟‍♀️ / Luna 🧛‍♀️ (vampire girl)
 gamer copy everywhere (Easy/Normal/Boss Mode, Legendary/Epic/Rare badges, Trophy Room),
 🎯 times-table drill row in Just Multiplying (settings.drillTable, ×0–×12), Enter no longer
 re-clicks focused buttons. sw.js cache v3. Headless-Chrome tested, no errors.
-**Next step:** David checks the iPad (Arcade look, Derpy, drill row, badge Save).
+**Also pushed:** even neon keypad borders with bottom glow; bigger math card on tall iPad screens (sw v4).
+**Next step:** David checks the iPad. Known: landscape iPad keypad runs ~10px past the screen bottom (pre-existing).
