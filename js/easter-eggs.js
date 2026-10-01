@@ -1,6 +1,6 @@
 /**
- * Lyra's Star Quest - Easter Eggs & Particle Effects
- * Confetti bursts, Supernova Party Mode, Konami Code, and secret word detectors.
+ * Lyra's Star Quest - Easter Eggs, Silliness & Creature Animations
+ * Galloping unicorns, floating space cats, silly mascot hats, and secret words.
  */
 
 class EasterEggController {
@@ -8,10 +8,12 @@ class EasterEggController {
     this.canvas = document.getElementById('confettiCanvas');
     this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
     this.particles = [];
+    this.floatingCreatures = [];
     this.isPartyMode = false;
     this.partyTimer = null;
     this.mascotTapCount = 0;
     this.lastMascotTap = 0;
+    this.currentHatIndex = 0;
     this.keyBuffer = [];
 
     this.konamiCode = [
@@ -19,10 +21,15 @@ class EasterEggController {
       'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
       'b', 'a'
     ];
+
     this.secretWords = {
+      'unicorn': () => this.spawnGallopingUnicorn(),
+      'cat': () => this.spawnFlyingCat(),
+      'meow': () => this.spawnFlyingCat(),
+      'caticorn': () => { this.spawnGallopingUnicorn(); this.spawnFlyingCat(); },
+      'rainbow': () => this.burstConfetti(100, ['#ff4d8d', '#ff9a00', '#ffd100', '#06d6a0', '#00f5d4', '#7209b7']),
       'party': () => this.triggerPartyMode(),
       'galaxy': () => this.triggerGalaxyShower(),
-      'nova': () => this.triggerNovaWink(),
       'star': () => this.burstConfetti(80)
     };
 
@@ -42,7 +49,6 @@ class EasterEggController {
   }
 
   setupListeners() {
-    // Tap Nova Mascot 5 times to trigger Supernova Party Mode
     const mascot = document.getElementById('mascotBtn');
     if (mascot) {
       mascot.addEventListener('click', () => {
@@ -54,24 +60,32 @@ class EasterEggController {
         }
         this.lastMascotTap = now;
 
+        // Cycle funny silly accessories / hats
+        this.cycleMascotHat();
+
         if (this.mascotTapCount >= 5) {
           this.mascotTapCount = 0;
           this.triggerPartyMode();
         } else {
-          this.showMascotMessage(this.getRandomCheer());
+          // Play animal voice depending on buddy
+          const activeBuddy = window.app ? window.app.currentBuddy : 'unicorn';
+          if (activeBuddy === 'cat' && window.soundEngine) {
+            window.soundEngine.playCatMeow();
+          } else if ((activeBuddy === 'unicorn' || activeBuddy === 'caticorn') && window.soundEngine) {
+            window.soundEngine.playUnicornSparkle();
+          }
+          this.showMascotMessage(this.getRandomSillyMessage());
         }
       });
     }
 
     // Keyboard listener for Konami code and secret words
     window.addEventListener('keydown', (e) => {
-      // Don't intercept if typing in a text field
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
       this.keyBuffer.push(e.key.length === 1 ? e.key.toLowerCase() : e.key);
       if (this.keyBuffer.length > 25) this.keyBuffer.shift();
 
-      // Check Konami Code
       const konamiSlice = this.keyBuffer.slice(-this.konamiCode.length);
       if (konamiSlice.length === this.konamiCode.length &&
           konamiSlice.every((val, idx) => val.toLowerCase() === this.konamiCode[idx].toLowerCase())) {
@@ -80,7 +94,6 @@ class EasterEggController {
         return;
       }
 
-      // Check Secret Words
       const bufferString = this.keyBuffer.join('');
       for (const [word, action] of Object.entries(this.secretWords)) {
         if (bufferString.endsWith(word)) {
@@ -92,19 +105,52 @@ class EasterEggController {
     });
   }
 
-  getRandomCheer() {
-    const cheers = [
-      "You're a math superstar, Lyra! 🌟",
-      "Keep shining bright! ✨",
-      "High five! You got this! ✋",
-      "Cosmic brain power! 🧠⚡",
-      "Star power activated! 🚀",
-      "I believe in you! 💖"
-    ];
-    return cheers[Math.floor(Math.random() * cheers.length)];
+  cycleMascotHat() {
+    this.currentHatIndex = (this.currentHatIndex + 1) % 4;
+    const glasses = document.getElementById('partyGlasses');
+    const horn = document.getElementById('mascotHorn');
+    const catEars = document.getElementById('mascotCatEars');
+
+    if (glasses) glasses.classList.add('hidden');
+    if (horn) horn.classList.add('hidden');
+    if (catEars) catEars.classList.add('hidden');
+
+    if (this.currentHatIndex === 1 && glasses) {
+      glasses.classList.remove('hidden');
+    } else if (this.currentHatIndex === 2 && horn) {
+      horn.classList.remove('hidden');
+    } else if (this.currentHatIndex === 3 && catEars) {
+      catEars.classList.remove('hidden');
+    }
   }
 
-  showMascotMessage(text, duration = 3000) {
+  getRandomSillyMessage() {
+    const messages = [
+      "🦄 *Neigh!* Unicorn power is with you, Lyra!",
+      "🐱 *Purrrrr* You are pawsitively awesome!",
+      "✨ Did you know 7 × 8 is a galaxy secret?",
+      "🌈 Brain muscles expanding at warp speed!",
+      "🐾 Cat high-five! High-four? Whatever, good job!",
+      "🥞 Silly thought: what if stars were made of pancakes?",
+      "🚀 We are zooming straight toward Math Mastery!"
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+
+  // Celebratory encouragement for mistakes
+  getMistakeEncouragement() {
+    const praises = [
+      "🌱 Brain stretch! Mistakes grow your neurons!",
+      "🦄 Super guess, Lyra! Unicorns love learning!",
+      "🐱 Pawsome try! Take a peek at 'Show Me' 💡",
+      "✨ So close! Trying makes your math superpower grow!",
+      "💫 High five for tackling tough questions! Try again!",
+      "🌈 Mistakes are just practice in disguise!"
+    ];
+    return praises[Math.floor(Math.random() * praises.length)];
+  }
+
+  showMascotMessage(text, duration = 3500) {
     const bubble = document.getElementById('mascotSpeech');
     if (!bubble) return;
     bubble.textContent = text;
@@ -123,14 +169,15 @@ class EasterEggController {
     if (this.isPartyMode) {
       body.classList.add('party-mode');
       if (glasses) glasses.classList.remove('hidden');
-      this.showMascotMessage("🪩 SUPERNOVA PARTY MODE ACTIVATED!! 🚀", 6000);
-      this.burstConfetti(150);
+      this.showMascotMessage("🪩 UNICORN & CAT DISCO PARTY ACTIVATED!! 🦄🐱", 6000);
+      this.burstConfetti(160);
+      this.spawnGallopingUnicorn();
+      this.spawnFlyingCat();
 
       if (window.soundEngine) {
         window.soundEngine.startPartyBeats();
       }
 
-      // Automatically calm down after 15 seconds so she can focus
       clearTimeout(this.partyTimer);
       this.partyTimer = setTimeout(() => {
         if (this.isPartyMode) this.triggerPartyMode();
@@ -138,11 +185,51 @@ class EasterEggController {
     } else {
       body.classList.remove('party-mode');
       if (glasses) glasses.classList.add('hidden');
-      this.showMascotMessage("Great party! Ready to solve more stars! ⭐", 3000);
+      this.showMascotMessage("Great disco dance! Ready for more math stars! ⭐", 3000);
       if (window.soundEngine) {
         window.soundEngine.stopPartyBeats();
       }
     }
+  }
+
+  // Galloping Unicorn animation across screen
+  spawnGallopingUnicorn() {
+    if (window.soundEngine) window.soundEngine.playUnicornSparkle();
+    this.showMascotMessage("🦄 Look! A wild magical unicorn appeared! ✨", 3000);
+
+    const unicorn = document.createElement('div');
+    unicorn.className = 'galloping-unicorn-overlay';
+    unicorn.innerHTML = `
+      <span class="creature-emoji">🦄</span>
+      <div class="creature-rainbow-trail">🌈✨💫⭐💖</div>
+    `;
+    document.body.appendChild(unicorn);
+
+    setTimeout(() => {
+      if (unicorn.parentNode) unicorn.parentNode.removeChild(unicorn);
+    }, 4500);
+
+    this.burstConfetti(60, ['#f72585', '#7209b7', '#00f5d4', '#ffd166', '#ffffff']);
+  }
+
+  // Flying Space Cat animation across screen
+  spawnFlyingCat() {
+    if (window.soundEngine) window.soundEngine.playCatMeow();
+    this.showMascotMessage("🐱 *Meow!* Space Cat is floating past! 🪐", 3000);
+
+    const cat = document.createElement('div');
+    cat.className = 'floating-cat-overlay';
+    cat.innerHTML = `
+      <span class="creature-emoji">🐱🚀</span>
+      <div class="creature-rainbow-trail">🐾✨⭐💫🐾</div>
+    `;
+    document.body.appendChild(cat);
+
+    setTimeout(() => {
+      if (cat.parentNode) cat.parentNode.removeChild(cat);
+    }, 4500);
+
+    this.burstConfetti(40, ['#ffd166', '#ff70a6', '#00f5d4']);
   }
 
   triggerGalaxyShower() {
@@ -150,16 +237,11 @@ class EasterEggController {
     this.burstConfetti(120, ['#00f5d4', '#7209b7', '#f72585', '#ffd166', '#ffffff']);
   }
 
-  triggerNovaWink() {
-    this.showMascotMessage("😉 *Wink* Nova gives you +1000 Lucky Points!", 3000);
-    this.burstConfetti(40);
-  }
-
   // Particle explosion
   burstConfetti(count = 60, customColors = null) {
     if (!this.canvas) return;
     const colors = customColors || [
-      '#ffd166', '#06d6a0', '#118ab2', '#073b4c', '#f72585', '#7209b7', '#00f5d4', '#ff70a6'
+      '#ffd166', '#06d6a0', '#118ab2', '#f72585', '#7209b7', '#00f5d4', '#ff70a6', '#ffffff'
     ];
     const originX = window.innerWidth / 2;
     const originY = window.innerHeight * 0.45;
@@ -179,7 +261,8 @@ class EasterEggController {
         opacity: 1,
         life: 1,
         decay: Math.random() * 0.012 + 0.008,
-        isStar: Math.random() > 0.4
+        isStar: Math.random() > 0.35,
+        isHeart: Math.random() > 0.75
       });
     }
   }
@@ -193,7 +276,7 @@ class EasterEggController {
           const p = this.particles[i];
           p.x += p.vx;
           p.y += p.vy;
-          p.vy += 0.22; // Gravity
+          p.vy += 0.22;
           p.vx *= 0.985;
           p.rotation += p.rotSpeed;
           p.life -= p.decay;
@@ -210,10 +293,10 @@ class EasterEggController {
           this.ctx.fillStyle = p.color;
 
           if (p.isStar) {
-            // Draw a cute 5-point star
             this.drawStar(this.ctx, 0, 0, 5, p.size, p.size / 2);
+          } else if (p.isHeart) {
+            this.drawHeart(this.ctx, 0, 0, p.size);
           } else {
-            // Rounded confetti rectangle
             this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.7);
           }
 
@@ -245,6 +328,18 @@ class EasterEggController {
       rot += step;
     }
     ctx.lineTo(cx, cy - outerRadius);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  drawHeart(ctx, x, y, size) {
+    ctx.beginPath();
+    const topCurveHeight = size * 0.3;
+    ctx.moveTo(x, y + topCurveHeight);
+    ctx.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + topCurveHeight);
+    ctx.bezierCurveTo(x - size / 2, y + (size + topCurveHeight) / 2, x, y + (size + topCurveHeight) / 2, x, y + size);
+    ctx.bezierCurveTo(x, y + (size + topCurveHeight) / 2, x + size / 2, y + (size + topCurveHeight) / 2, x + size / 2, y + topCurveHeight);
+    ctx.bezierCurveTo(x + size / 2, y, x, y, x, y + topCurveHeight);
     ctx.closePath();
     ctx.fill();
   }

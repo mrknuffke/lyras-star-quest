@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Lyra's Star Quest 🌟 Fact Fluency</title>
-  <meta name="description" content="A magical, vibrant math fact fluency app for Lyra to master addition, subtraction, and multiplication in 5 fun minutes a day!">
+  <title>Lyra's Star Quest 🌟 Unicorns, Cats & Math Fluency!</title>
+  <meta name="description" content="A magical, vibrant math fact fluency app for Lyra with unicorns, space cats, and joyful practice for addition, subtraction, and multiplication!">
   
   <!-- Web App Manifest & Apple PWA support for iPad -->
   <link rel="manifest" href="manifest.json">
@@ -15,51 +15,87 @@
   <link rel="apple-touch-icon" href="assets/icon.svg">
   <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
 
-  <!-- Google Fonts: Fredoka & Outfit for kid-friendly, playful yet ultra-clean typography -->
+  <!-- Google Fonts: Fredoka & Outfit for kid-friendly, playful typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="css/styles.css">
 </head>
-<body data-theme="nebula">
-  <!-- Dynamic Confetti Canvas for Celebrations & Easter Eggs -->
+<body data-theme="unicorn">
+  <!-- Dynamic Confetti & Creature Canvas -->
   <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
 
   <div class="app-container">
     <!-- Top Navigation & Stats Bar -->
     <header class="app-header">
       <div class="header-left">
-        <!-- Interactive Mascot: Nova -->
-        <button id="mascotBtn" class="mascot-button" aria-label="Nova the star mascot" title="Tap Nova for fun!">
+        <!-- Interactive Mascot: Tap to cycle hats / play silly sounds! -->
+        <button id="mascotBtn" class="mascot-button" aria-label="Math buddy mascot" title="Tap your buddy for silly surprises!">
           <div class="mascot-svg-wrapper" id="mascotWrapper">
-            <svg class="mascot-svg" viewBox="0 0 100 100" width="48" height="48">
-              <path class="mascot-star" d="M 50,5 L 61,35 L 95,35 L 67,55 L 78,88 L 50,68 L 22,88 L 33,55 L 5,35 L 39,35 Z" fill="#ffd100" stroke="#fff" stroke-width="3" />
-              <!-- Normal Eyes -->
-              <g class="mascot-eyes normal-eyes">
-                <circle cx="41" cy="45" r="4.5" fill="#1c0f38" />
-                <circle cx="40" cy="43.5" r="1.5" fill="#ffffff" />
-                <circle cx="59" cy="45" r="4.5" fill="#1c0f38" />
-                <circle cx="58" cy="43.5" r="1.5" fill="#ffffff" />
+            <svg class="mascot-svg" id="mascotSvg" viewBox="0 0 100 100" width="52" height="52">
+              <!-- Star Body (Nova) -->
+              <path class="mascot-body-star" id="mascotStarBody" d="M 50,7 L 61,35 L 93,35 L 67,55 L 77,87 L 50,68 L 23,87 L 33,55 L 7,35 L 39,35 Z" fill="#ffd100" stroke="#fff" stroke-width="3" />
+              
+              <!-- Cat Ears (for Cat / Caticorn mode) -->
+              <g id="mascotCatEars" class="mascot-cat-ears hidden">
+                <polygon points="26,30 14,8 38,20" fill="#f472b6" stroke="#fff" stroke-width="2" />
+                <polygon points="26,26 19,12 34,20" fill="#fbcfe8" />
+                <polygon points="74,30 86,8 62,20" fill="#f472b6" stroke="#fff" stroke-width="2" />
+                <polygon points="74,26 81,12 66,20" fill="#fbcfe8" />
+              </g>
+
+              <!-- Golden Spiral Unicorn Horn (for Unicorn / Caticorn mode) -->
+              <g id="mascotHorn" class="mascot-horn">
+                <polygon points="50,2 43,30 57,30" fill="url(#hornGrad)" stroke="#fff" stroke-width="2" />
+                <line x1="45" y1="22" x2="55" y2="16" stroke="#fff" stroke-width="1.8" />
+                <line x1="47" y1="12" x2="53" y2="7" stroke="#fff" stroke-width="1.8" />
+              </g>
+
+              <!-- Cute Anime Eyes -->
+              <g class="mascot-eyes" id="mascotEyes">
+                <circle cx="41" cy="47" r="4.5" fill="#1c0f38" />
+                <circle cx="40" cy="45" r="1.6" fill="#ffffff" />
+                <circle cx="59" cy="47" r="4.5" fill="#1c0f38" />
+                <circle cx="58" cy="45" r="1.6" fill="#ffffff" />
                 <!-- Blushing Cheeks -->
-                <ellipse cx="34" cy="51" rx="4" ry="2.5" fill="#ff4d8d" opacity="0.6" />
-                <ellipse cx="66" cy="51" rx="4" ry="2.5" fill="#ff4d8d" opacity="0.6" />
+                <ellipse cx="33" cy="53" rx="4.5" ry="3" fill="#ff4d8d" opacity="0.75" />
+                <ellipse cx="67" cy="53" rx="4.5" ry="3" fill="#ff4d8d" opacity="0.75" />
+                <!-- Cat Whiskers -->
+                <g id="mascotWhiskers" class="mascot-whiskers hidden">
+                  <line x1="22" y1="51" x2="31" y2="52" stroke="#1c0f38" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="20" y1="56" x2="31" y2="55" stroke="#1c0f38" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="78" y1="51" x2="69" y2="52" stroke="#1c0f38" stroke-width="1.5" stroke-linecap="round"/>
+                  <line x1="80" y1="56" x2="69" y2="55" stroke="#1c0f38" stroke-width="1.5" stroke-linecap="round"/>
+                </g>
                 <!-- Happy Smile -->
-                <path class="mascot-mouth" d="M 45,51 Q 50,57 55,51" fill="none" stroke="#1c0f38" stroke-width="2.5" stroke-linecap="round" />
+                <path class="mascot-mouth" id="mascotMouth" d="M 45,53 Q 50,59 55,53" fill="none" stroke="#1c0f38" stroke-width="2.5" stroke-linecap="round" />
               </g>
-              <!-- Party Sunglasses (hidden by default) -->
+
+              <!-- Party Sunglasses (Easter egg / cycle hat) -->
               <g class="mascot-sunglasses hidden" id="partyGlasses">
-                <polygon points="32,41 49,41 46,50 35,50" fill="#0c0024" stroke="#ff007f" stroke-width="1.5"/>
-                <polygon points="51,41 68,41 65,50 54,50" fill="#0c0024" stroke="#00f5d4" stroke-width="1.5"/>
-                <line x1="47" y1="44" x2="53" y2="44" stroke="#fff" stroke-width="2" />
+                <polygon points="32,43 49,43 46,52 35,52" fill="#0c0024" stroke="#ff007f" stroke-width="1.5"/>
+                <polygon points="51,43 68,43 65,52 54,52" fill="#0c0024" stroke="#00f5d4" stroke-width="1.5"/>
+                <line x1="47" y1="46" x2="53" y2="46" stroke="#fff" stroke-width="2" />
               </g>
+
+              <defs>
+                <linearGradient id="hornGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stop-color="#ffd166" />
+                  <stop offset="50%" stop-color="#00f5d4" />
+                  <stop offset="100%" stop-color="#ff70a6" />
+                </linearGradient>
+              </defs>
             </svg>
           </div>
-          <span class="mascot-speech" id="mascotSpeech">Hi Lyra! Ready to shine? ✨</span>
+          <span class="mascot-speech" id="mascotSpeech">Hi Lyra! I believe in you! 🦄✨</span>
         </button>
 
         <div class="app-branding">
           <h1 class="app-title">Lyra's <span class="gradient-text">Star Quest</span></h1>
+          <button id="buddySwitchBtn" class="buddy-switch-pill" title="Switch your buddy!">
+            <span id="currentBuddyEmoji">🦄</span> <span id="currentBuddyName">Celeste</span> ▾
+          </button>
         </div>
       </div>
 
@@ -80,37 +116,55 @@
 
         <!-- Actions -->
         <div class="header-actions">
-          <!-- Constellation Map Modal Trigger -->
           <button id="constellationBtn" class="icon-btn" title="View Sky Constellation" aria-label="Constellation map">
             🌌
           </button>
-          <!-- Theme Switcher -->
-          <button id="themeToggleBtn" class="icon-btn" title="Change Cosmic Theme" aria-label="Switch theme">
+          <button id="themeToggleBtn" class="icon-btn" title="Change Theme (Unicorn, Cat, Nebula, Candy)" aria-label="Switch theme">
             🎨
           </button>
-          <!-- Sound Toggle -->
           <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound" aria-label="Toggle sound">
             🔊
           </button>
-          <!-- Parent / Teacher Settings -->
-          <button id="settingsBtn" class="icon-btn" title="Math Settings" aria-label="Open settings">
+          <button id="settingsBtn" class="icon-btn" title="Math & Difficulty Settings" aria-label="Open settings">
             ⚙️
           </button>
         </div>
       </div>
     </header>
 
-    <!-- Main Navigation Tabs: Daily Quest vs Practice Lab -->
-    <nav class="mode-tabs">
-      <button class="mode-tab active" id="tabDailyQuest" data-mode="daily">
-        <span class="tab-emoji">🚀</span>
-        <span class="tab-text">Daily 5-Min Quest</span>
-      </button>
-      <button class="mode-tab" id="tabPracticeLab" data-mode="lab">
-        <span class="tab-emoji">🧪</span>
-        <span class="tab-text">Practice Lab</span>
-      </button>
-    </nav>
+    <!-- Prominent Sticky Operation Selector: Single Tap Switch! -->
+    <section class="quick-op-bar" aria-label="Select operation to practice">
+      <div class="quick-op-group" id="quickOpGroup">
+        <button class="op-pill active" data-op="mixed" title="Practice mixed math">
+          <span class="pill-icon">🎲</span> <span class="pill-title">Mixed All</span>
+        </button>
+        <button class="op-pill" data-op="add" title="Practice addition only">
+          <span class="pill-icon">➕</span> <span class="pill-title">Just Adding</span>
+        </button>
+        <button class="op-pill" data-op="sub" title="Practice subtraction only">
+          <span class="pill-icon">➖</span> <span class="pill-title">Just Subtracting</span>
+        </button>
+        <button class="op-pill" data-op="mul" title="Practice multiplication only">
+          <span class="pill-icon">✖️</span> <span class="pill-title">Just Multiplying</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Sticky Difficulty Quick Presets Bar: Easy, Medium, Challenge -->
+    <section class="difficulty-bar" aria-label="Select difficulty level">
+      <span class="difficulty-label">Level:</span>
+      <div class="difficulty-group" id="quickDifficultyGroup">
+        <button class="diff-btn" data-diff="gentle" title="Warm-up / Easy (within 10, foundational tables)">
+          🐣 Gentle
+        </button>
+        <button class="diff-btn active" data-diff="medium" title="Standard 3rd Grade (within 20, tables 0-10)">
+          🌟 Just Right
+        </button>
+        <button class="diff-btn" data-diff="challenge" title="Super Math Wizard (sums to 100, tables to 12)">
+          🚀 Challenge
+        </button>
+      </div>
+    </section>
 
     <!-- Sub-bar for Daily Quest Timer & Progress -->
     <section class="quest-status-card" id="questStatusCard">
@@ -135,45 +189,14 @@
       </div>
     </section>
 
-    <!-- Practice Lab Filter Bar (visible only in Lab mode) -->
-    <section class="lab-filter-bar hidden" id="labFilterBar">
-      <div class="filter-group">
-        <span class="filter-label">Operation:</span>
-        <div class="filter-chips" id="labOpChips">
-          <button class="chip active" data-op="mixed">Mixed 🎲</button>
-          <button class="chip" data-op="add">Addition ➕</button>
-          <button class="chip" data-op="sub">Subtraction ➖</button>
-          <button class="chip" data-op="mul">Multiplication ✖️</button>
-        </div>
-      </div>
-      <div class="filter-group hidden" id="labMulTableGroup">
-        <span class="filter-label">Table:</span>
-        <select id="labTableSelect" class="styled-select">
-          <option value="all">All Tables (0-10)</option>
-          <option value="0">0s & 1s</option>
-          <option value="2">2s Table</option>
-          <option value="3">3s Table</option>
-          <option value="4">4s Table</option>
-          <option value="5">5s Table</option>
-          <option value="6">6s Table</option>
-          <option value="7">7s Table</option>
-          <option value="8">8s Table</option>
-          <option value="9">9s Table</option>
-          <option value="10">10s Table</option>
-          <option value="11">11s Table</option>
-          <option value="12">12s Table</option>
-        </select>
-      </div>
-    </section>
-
     <!-- Main Game Play Area -->
     <main class="game-board">
       <!-- Challenge Card -->
       <div class="challenge-card" id="challengeCard">
-        <!-- Floating sparkle accents -->
-        <span class="star-sparkle sparkle-1">✦</span>
+        <!-- Floating sparkle & creature accents -->
+        <span class="star-sparkle sparkle-1">🦄</span>
         <span class="star-sparkle sparkle-2">★</span>
-        <span class="star-sparkle sparkle-3">✧</span>
+        <span class="star-sparkle sparkle-3">🐱</span>
 
         <!-- Operation Badge -->
         <div class="op-badge" id="opBadge">
@@ -194,7 +217,7 @@
           </div>
         </div>
 
-        <!-- Feedback & Encouragement Banner -->
+        <!-- Feedback & Encouragement Banner (Celebrates mistakes with growth mindset!) -->
         <div class="feedback-banner" id="feedbackBanner" aria-live="polite"></div>
 
         <!-- Quick Help Bar -->
@@ -206,7 +229,7 @@
         </div>
       </div>
 
-      <!-- Tactile Virtual Keypad (for iPad touch & mouse clicks) -->
+      <!-- Tactile Virtual Keypad (iPad touch & mouse clicks) -->
       <div class="keypad-container" id="keypad">
         <button class="key-btn" data-key="1">1</button>
         <button class="key-btn" data-key="2">2</button>
@@ -227,13 +250,13 @@
       </div>
 
       <!-- Keyboard shortcut hint for desktop users -->
-      <p class="desktop-hint">💡 Tip: On a keyboard, use the number keys and press <kbd>Enter</kbd> (or <kbd>H</kbd> for help!)</p>
+      <p class="desktop-hint">💡 Tip: Use keyboard numbers and <kbd>Enter</kbd> (or press <kbd>H</kbd> for help!)</p>
     </main>
 
     <!-- Celebration Screen (Overlay when 5-min Daily Quest completes!) -->
     <div class="modal-backdrop hidden" id="celebrationModal" role="dialog" aria-modal="true">
       <div class="modal-card celebration-card">
-        <div class="celebration-mascot-jump">🌟</div>
+        <div class="celebration-mascot-jump">🦄🎉🐱</div>
         <h2 class="celebration-title">You Did It, Lyra! 🎉</h2>
         <p class="celebration-subtitle">You completed your 5-minute math quest for today!</p>
         
@@ -261,7 +284,7 @@
             🌌 View My Constellation
           </button>
           <button id="keepPracticingBtn" class="pill-btn secondary-btn">
-            🚀 Keep Practicing (Free Play)
+            🚀 Keep Playing & Practicing
           </button>
         </div>
       </div>
@@ -275,9 +298,7 @@
           <button class="modal-close-btn" id="closeHelpBtn" aria-label="Close help">✕</button>
         </div>
 
-        <div class="help-content-body" id="helpContentBody">
-          <!-- Dynamically populated visual array or ten-frame -->
-        </div>
+        <div class="help-content-body" id="helpContentBody"></div>
 
         <div class="modal-footer">
           <button class="pill-btn primary-btn" id="gotItHelpBtn">I Got It! Let's Try 💫</button>
@@ -300,30 +321,52 @@
 
         <div class="constellation-footer-info">
           <span id="constellationDaysCount">3 of 30 Stars Lit</span>
-          <span class="constellation-badge" id="currentRankBadge">🌟 Starlight Apprentice</span>
+          <span class="constellation-badge" id="currentRankBadge">🦄 Celestial Unicorn Champion</span>
         </div>
       </div>
     </div>
 
-    <!-- Parent / Teacher Settings Modal -->
+    <!-- Parent / Teacher Options Menu Modal with Sticky Settings -->
     <div class="modal-backdrop hidden" id="settingsModal" role="dialog" aria-modal="true">
       <div class="modal-card settings-card">
         <div class="modal-header">
-          <h3>⚙️ Practice Settings</h3>
+          <h3>⚙️ Options & Math Difficulty</h3>
           <button class="modal-close-btn" id="closeSettingsBtn" aria-label="Close settings">✕</button>
         </div>
         
         <div class="settings-body">
+          <!-- Difficulty Preset Picker -->
+          <div class="setting-section-title">Difficulty Level (Sticky):</div>
+          <div class="setting-row">
+            <select id="modalDifficultySelect" class="styled-select" style="width: 100%;">
+              <option value="gentle">🐣 Gentle / Warm-up (within 10, basic tables)</option>
+              <option value="medium" selected>🌟 Just Right (Grade 3 standard: within 20, tables 0-10)</option>
+              <option value="challenge">🚀 Challenge / Wizard (within 100, tables 0-12)</option>
+              <option value="custom">🛠️ Custom (Use checkboxes below)</option>
+            </select>
+          </div>
+
+          <!-- Companion Picker -->
+          <div class="setting-section-title">Choose Lyra's Buddy:</div>
+          <div class="setting-row">
+            <select id="modalBuddySelect" class="styled-select" style="width: 100%;">
+              <option value="unicorn">🦄 Celeste the Magical Unicorn</option>
+              <option value="cat">🐱 Barnaby the Space Cat</option>
+              <option value="caticorn">🌈 Sparkle the Caticorn (Cat + Unicorn!)</option>
+              <option value="star">⭐ Nova the Cosmic Star</option>
+            </select>
+          </div>
+
           <div class="setting-row">
             <label for="dailyMinutesSelect">Daily Quest Duration:</label>
             <select id="dailyMinutesSelect" class="styled-select">
-              <option value="3">3 Minutes (Speed Run)</option>
+              <option value="3">3 Minutes (Quick Spin)</option>
               <option value="5" selected>5 Minutes (Recommended)</option>
               <option value="10">10 Minutes (Power Math)</option>
             </select>
           </div>
 
-          <div class="setting-section-title">Operations in Daily Quest:</div>
+          <div class="setting-section-title">Operations Allowed in Mixed Mode:</div>
           <div class="checkbox-group">
             <label class="custom-checkbox">
               <input type="checkbox" id="settingOpAdd" checked>
@@ -342,10 +385,8 @@
             </label>
           </div>
 
-          <div class="setting-section-title">Multiplication Tables Focus:</div>
-          <div class="table-toggles-grid" id="settingsTableGrid">
-            <!-- 0 to 12 buttons generated by JS -->
-          </div>
+          <div class="setting-section-title">Custom Multiplication Tables:</div>
+          <div class="table-toggles-grid" id="settingsTableGrid"></div>
 
           <div class="setting-section-title">Addition & Subtraction Range:</div>
           <div class="setting-row">
@@ -358,7 +399,7 @@
             </select>
           </div>
 
-          <div class="setting-section-title">Data & Progress:</div>
+          <div class="setting-section-title">Progress Reset:</div>
           <div class="danger-zone">
             <button id="resetTodayBtn" class="pill-btn danger-outline-btn">Reset Today's Timer</button>
             <button id="resetAllDataBtn" class="pill-btn danger-btn">Reset All Progress</button>
@@ -366,7 +407,7 @@
         </div>
 
         <div class="modal-footer">
-          <button class="pill-btn primary-btn" id="saveSettingsBtn">Save & Apply</button>
+          <button class="pill-btn primary-btn" id="saveSettingsBtn">Save & Apply Changes</button>
         </div>
       </div>
     </div>

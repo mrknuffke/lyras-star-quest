@@ -1,6 +1,8 @@
 /**
  * Lyra's Star Quest - Math Engine
- * Adaptive fact generator, spaced repetition queue, and visual manipulative models.
+ * Adaptive fact generator with sticky difficulty presets (Easy / Medium / Challenge),
+ * sticky single-operation selection (Just Adding, Just Subtracting, Just Multiplying, or Mixed),
+ * spaced repetition queue, and visual manipulative models.
  */
 
 class MathEngine {
@@ -8,12 +10,12 @@ class MathEngine {
     this.recentMisses = []; // Queue for spaced re-testing of tricky facts
     this.lastProblem = null;
     
-    // Load or default settings
+    // Load sticky settings from localStorage
     this.settings = this.loadSettings();
   }
 
   loadSettings() {
-    const saved = localStorage.getItem('lyra_math_settings');
+    const saved = localStorage.getItem('lyra_math_settings_v2');
     if (saved) {
       try {
         return JSON.parse(saved);
@@ -21,53 +23,69 @@ class MathEngine {
     }
     return {
       dailyMinutes: 5,
-      operations: {
+      selectedOp: 'mixed', // 'mixed' | 'add' | 'sub' | 'mul'
+      difficulty: 'medium', // 'gentle' | 'medium' | 'challenge' | 'custom'
+      customOps: {
         add: true,
         sub: true,
         mul: true
       },
       addMaxSum: 20,
-      mulTables: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10] // Grade 3 core tables
+      mulTables: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     };
   }
 
   saveSettings(newSettings) {
     this.settings = { ...this.settings, ...newSettings };
-    localStorage.setItem('lyra_math_settings', JSON.stringify(this.settings));
+    localStorage.setItem('lyra_math_settings_v2', JSON.stringify(this.settings));
   }
 
-  // Generates next problem based on mode (daily quest vs practice lab)
+  setOperation(op) {
+    this.settings.selectedOp = op;
+    this.saveSettings(this.settings);
+  }
+
+  setDifficulty(diff) {
+    this.settings.difficulty = diff;
+    if (diff === 'gentle') {
+      this.settings.addMaxSum = 10;
+      this.settings.mulTables = [0, 1, 2, 5, 10];
+    } else if (diff === 'medium') {
+      this.settings.addMaxSum = 20;
+      this.settings.mulTables = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    } else if (diff === 'challenge') {
+      this.settings.addMaxSum = 100;
+      this.settings.mulTables = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+    }
+    this.saveSettings(this.settings);
+  }
+
+  // Generates next problem
   generateProblem(mode = 'daily', labFilter = { op: 'mixed', table: 'all' }) {
-    // 1. Spaced Repetition Check: If we have a pending retry problem, 30% chance to pop it
-    if (mode === 'daily' && this.recentMisses.length > 0 && Math.random() < 0.35) {
+    // 1. Spaced Repetition Check: If we have a pending retry problem, 35% chance to re-test it
+    if (this.recentMisses.length > 0 && Math.random() < 0.35) {
       const retryProblem = this.recentMisses.shift();
-      // Ensure it wasn't the immediate last problem
       if (!this.lastProblem || retryProblem.id !== this.lastProblem.id) {
         this.lastProblem = retryProblem;
         return retryProblem;
       } else {
-        this.recentMisses.push(retryProblem); // push back
+        this.recentMisses.push(retryProblem);
       }
     }
 
-    // 2. Determine Operation
-    let op = 'mul';
-    if (mode === 'daily') {
-      const allowedOps = [];
-      if (this.settings.operations.add) allowedOps.push('add');
-      if (this.settings.operations.sub) allowedOps.push('sub');
-      if (this.settings.operations.mul) allowedOps.push('mul');
+    // 2. Determine Operation (based on sticky selection)
+    let op = this.settings.selectedOp || 'mixed';
+    if (mode === 'lab' && labFilter && labFilter.op) {
+      op = labFilter.op;
+    }
 
-      if (allowedOps.length === 0) allowedOps.push('mul');
-      op = allowedOps[Math.floor(Math.random() * allowedOps.length)];
-    } else {
-      // Lab mode
-      if (labFilter.op === 'mixed') {
-        const pool = ['add', 'sub', 'mul'];
-        op = pool[Math.floor(Math.random() * pool.length)];
-      } else {
-        op = labFilter.op;
-      }
+    if (op === 'mixed') {
+      const pool = [];
+      if (this.settings.customOps.add) pool.push('add');
+      if (this.settings.customOps.sub) pool.push('sub');
+      if (this.settings.customOps.mul) pool.push('mul');
+      if (pool.length === 0) pool.push('mul');
+      op = pool[Math.floor(Math.random() * pool.length)];
     }
 
     let problem;
@@ -89,25 +107,27 @@ class MathEngine {
 
   generateMultiplication(labFilter) {
     let allowedTables = this.settings.mulTables;
-    if (allowedTables.length === 0) allowedTables = [2, 3, 4, 5, 10];
-
-    // If lab mode specifies a single table
-    if (labFilter && labFilter.table !== 'all') {
-      const selectedT = parseInt(labFilter.table, 10);
-      if (selectedT === 0) {
-        allowedTables = [0, 1];
-      } else {
-        allowedTables = [selectedT];
-      }
+    if (!allowedTables || allowedTables.length === 0) {
+      allowedTables = [0, 1, 2, 3, 4, 5, 10];
     }
 
-    // Pick table a
-    const a = allowedTables[Math.floor(Math.random() * allowedTables.length)];
-    // Pick multiplier b (0 to 10 or 12)
-    const maxB = 10;
+    if (labFilter && labFilter.table && labFilter.table !== 'all') {
+      const selectedT = parseInt(labFilter.table, 10);
+      allowedTables = selectedT === 0 ? [0, 1] : [selectedT];
+    }
+
+    // In challenge mode, give higher weight to trickier tables (6, 7, 8, 9, 12)
+    let a;
+    if (this.settings.difficulty === 'challenge' && Math.random() < 0.65) {
+      const hardPool = [6, 7, 8, 9, 11, 12].filter(n => allowedTables.includes(n));
+      a = hardPool.length > 0 ? hardPool[Math.floor(Math.random() * hardPool.length)] : allowedTables[Math.floor(Math.random() * allowedTables.length)];
+    } else {
+      a = allowedTables[Math.floor(Math.random() * allowedTables.length)];
+    }
+
+    const maxB = (this.settings.difficulty === 'gentle') ? 5 : ((this.settings.difficulty === 'challenge') ? 12 : 10);
     const b = Math.floor(Math.random() * (maxB + 1));
 
-    // Randomize order for commutativity: a x b or b x a
     const swap = Math.random() > 0.5;
     const num1 = swap ? b : a;
     const num2 = swap ? a : b;
@@ -127,18 +147,22 @@ class MathEngine {
   }
 
   generateAddition() {
-    const maxSum = this.settings.addMaxSum || 20;
-    // Aim for meaningful Grade 2-3 addition (e.g. sums between 7 and maxSum)
+    const diff = this.settings.difficulty;
     let num1, num2, answer;
-    
-    if (maxSum <= 20) {
-      // Focus on single-digit plus single-digit crossing 10 (e.g., 8+7, 9+6, 7+5)
-      num1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
-      const remainingMax = Math.min(9, maxSum - num1);
-      num2 = Math.floor(Math.random() * (remainingMax - 1)) + 2;
+
+    if (diff === 'gentle') {
+      // Within 10
+      num1 = Math.floor(Math.random() * 8) + 1; // 1 to 8
+      num2 = Math.floor(Math.random() * (10 - num1)) + 1;
+    } else if (diff === 'challenge') {
+      // Challenge: 2-digit + 1-digit, or sums up to 100
+      num1 = Math.floor(Math.random() * 45) + 12;
+      num2 = Math.floor(Math.random() * 25) + 4;
     } else {
-      num1 = Math.floor(Math.random() * (maxSum - 10)) + 5;
-      num2 = Math.floor(Math.random() * (maxSum - num1)) + 1;
+      // Grade 3 Standard (Medium): sums crossing 10 within 20 (e.g. 8+7, 9+5, 6+8)
+      num1 = Math.floor(Math.random() * 8) + 2; // 2 to 9
+      const rem = Math.min(9, (this.settings.addMaxSum || 20) - num1);
+      num2 = Math.floor(Math.random() * (rem - 1)) + 2;
     }
 
     answer = num1 + num2;
@@ -156,18 +180,24 @@ class MathEngine {
   }
 
   generateSubtraction() {
-    const maxSum = this.settings.addMaxSum || 20;
+    const diff = this.settings.difficulty;
     let num1, num2, answer;
 
-    if (maxSum <= 20) {
-      // Meaningful subtraction within 20 with bridging 10 (e.g. 15-8, 13-7, 14-6)
-      answer = Math.floor(Math.random() * 8) + 2; // 2 to 9
-      num2 = Math.floor(Math.random() * 8) + 2;   // 2 to 9
-      num1 = answer + num2;                       // num1 is 4 to 18
-    } else {
-      num1 = Math.floor(Math.random() * (maxSum - 10)) + 10;
-      num2 = Math.floor(Math.random() * (num1 - 2)) + 1;
+    if (diff === 'gentle') {
+      // Facts within 10
+      answer = Math.floor(Math.random() * 6) + 1; // 1 to 6
+      num2 = Math.floor(Math.random() * (10 - answer)) + 1;
+      num1 = answer + num2;
+    } else if (diff === 'challenge') {
+      // Two-digit subtraction
+      num1 = Math.floor(Math.random() * 60) + 20;
+      num2 = Math.floor(Math.random() * (num1 - 8)) + 3;
       answer = num1 - num2;
+    } else {
+      // Standard: Facts within 20 crossing 10 (e.g. 15-7, 14-8, 13-6)
+      answer = Math.floor(Math.random() * 8) + 2;
+      num2 = Math.floor(Math.random() * 8) + 2;
+      num1 = answer + num2;
     }
 
     return {
@@ -183,14 +213,12 @@ class MathEngine {
     };
   }
 
-  // Queue problem for spaced repetition when struggled
   recordStruggle(problem) {
     if (!this.recentMisses.some(p => p.id === problem.id)) {
       this.recentMisses.push(problem);
     }
   }
 
-  // Generate visual manipulatives data & pedagogical hints
   getHelpExplanation(problem) {
     const { opType, num1, num2, answer } = problem;
 
@@ -204,8 +232,7 @@ class MathEngine {
   }
 
   getMultiplicationHelp(a, b, ans) {
-    // Determine friendly decomposition tip
-    let tip = `Think of this as ${a} groups of ${b} glowing stars!`;
+    let tip = `Think of this as ${a} groups of ${b} glowing stars or caticorns!`;
     let highlightRow = null;
 
     if (a === 0 || b === 0) {
@@ -241,13 +268,12 @@ class MathEngine {
   }
 
   getAdditionHelp(a, b, ans) {
-    let tip = `Count the dots together: ${a} cyan dots + ${b} magenta dots = ${ans}!`;
+    let tip = `Count them up together: ${a} + ${b} = ${ans}!`;
     
-    // Ten-frame making 10 tip
     if (a + b > 10 && a < 10 && b < 10) {
       const needToMake10 = 10 - a;
       const leftOver = b - needToMake10;
-      tip = `💡 Make a 10: Start with ${a}. Add ${needToMake10} to make 10, then add the leftover ${leftOver} = ${ans}!`;
+      tip = `💡 Make a 10: Start with ${a}. Add ${needToMake10} to make 10, then add leftover ${leftOver} = ${ans}!`;
     } else if (a === b) {
       tip = `💡 Doubles Fact! Two ${a}s make ${ans}!`;
     } else if (Math.abs(a - b) === 1) {

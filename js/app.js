@@ -1,11 +1,11 @@
 /**
  * Lyra's Star Quest - Main Application Controller
- * Handles gameplay loop, timer, user input, UI orchestration, and persistence.
+ * Handles gameplay loop, sticky difficulty, single-operation selection,
+ * mistake celebration (growth mindset), creature companions, and audio.
  */
 
 class StarQuestApp {
   constructor() {
-    this.mode = 'daily'; // 'daily' | 'lab'
     this.currentProblem = null;
     this.inputBuffer = '';
     this.isChecking = false;
@@ -16,15 +16,21 @@ class StarQuestApp {
     // Timer state
     this.timerInterval = null;
     this.isPaused = false;
-    this.totalQuestSeconds = 300; // 5 mins
+    this.totalQuestSeconds = 300;
     this.remainingSeconds = 300;
     this.questCompletedToday = false;
 
-    // Lab filter
-    this.labFilter = { op: 'mixed', table: 'all' };
+    // Buddies
+    this.buddies = [
+      { id: 'unicorn', name: 'Celeste', emoji: '🦄', speech: 'Hi Lyra! Magical math time! 🦄✨' },
+      { id: 'cat', name: 'Barnaby', emoji: '🐱', speech: 'Meow Lyra! Paws ready for math! 🐾' },
+      { id: 'caticorn', name: 'Sparkle', emoji: '🌈', speech: 'Caticorn power activated! 🌈🐱' },
+      { id: 'star', name: 'Nova', emoji: '⭐', speech: 'Ready to shine bright, Lyra! ⭐' }
+    ];
+    this.currentBuddyIndex = 0;
 
     // Themes
-    this.themes = ['nebula', 'enchanted', 'candy', 'sunset'];
+    this.themes = ['unicorn', 'cat', 'nebula', 'candy'];
     this.currentThemeIndex = 0;
 
     this.initElements();
@@ -32,6 +38,10 @@ class StarQuestApp {
     this.setupEventListeners();
     this.startQuestTimer();
     this.nextProblem();
+  }
+
+  get currentBuddy() {
+    return this.buddies[this.currentBuddyIndex].id;
   }
 
   initElements() {
@@ -50,14 +60,17 @@ class StarQuestApp {
     this.constellationBtn = document.getElementById('constellationBtn');
     this.settingsBtn = document.getElementById('settingsBtn');
 
-    // Navigation tabs
-    this.tabDailyQuest = document.getElementById('tabDailyQuest');
-    this.tabPracticeLab = document.getElementById('tabPracticeLab');
-    this.questStatusCard = document.getElementById('questStatusCard');
-    this.labFilterBar = document.getElementById('labFilterBar');
-    this.labOpChips = document.getElementById('labOpChips');
-    this.labMulTableGroup = document.getElementById('labMulTableGroup');
-    this.labTableSelect = document.getElementById('labTableSelect');
+    // Buddy Switcher
+    this.buddySwitchBtn = document.getElementById('buddySwitchBtn');
+    this.currentBuddyEmoji = document.getElementById('currentBuddyEmoji');
+    this.currentBuddyName = document.getElementById('currentBuddyName');
+    this.mascotHorn = document.getElementById('mascotHorn');
+    this.mascotCatEars = document.getElementById('mascotCatEars');
+    this.mascotWhiskers = document.getElementById('mascotWhiskers');
+
+    // Quick Operation & Difficulty Bars
+    this.quickOpGroup = document.getElementById('quickOpGroup');
+    this.quickDifficultyGroup = document.getElementById('quickDifficultyGroup');
 
     // Challenge Card elements
     this.challengeCard = document.getElementById('challengeCard');
@@ -98,6 +111,8 @@ class StarQuestApp {
     this.settingsModal = document.getElementById('settingsModal');
     this.closeSettingsBtn = document.getElementById('closeSettingsBtn');
     this.saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    this.modalDifficultySelect = document.getElementById('modalDifficultySelect');
+    this.modalBuddySelect = document.getElementById('modalBuddySelect');
     this.dailyMinutesSelect = document.getElementById('dailyMinutesSelect');
     this.settingOpAdd = document.getElementById('settingOpAdd');
     this.settingOpSub = document.getElementById('settingOpSub');
@@ -109,8 +124,8 @@ class StarQuestApp {
   }
 
   loadState() {
-    // 1. Saved theme
-    const savedTheme = localStorage.getItem('lyra_theme') || 'nebula';
+    // 1. Theme
+    const savedTheme = localStorage.getItem('lyra_theme') || 'unicorn';
     document.body.setAttribute('data-theme', savedTheme);
     this.currentThemeIndex = this.themes.indexOf(savedTheme);
     if (this.currentThemeIndex === -1) this.currentThemeIndex = 0;
@@ -120,7 +135,25 @@ class StarQuestApp {
       this.soundToggleBtn.textContent = '🔇';
     }
 
-    // 3. Daily streak & constellation tracking
+    // 3. Buddy Companion (Unicorn / Cat / Caticorn / Star)
+    const savedBuddy = localStorage.getItem('lyra_active_buddy') || 'unicorn';
+    const foundIdx = this.buddies.findIndex(b => b.id === savedBuddy);
+    this.currentBuddyIndex = foundIdx !== -1 ? foundIdx : 0;
+    this.applyBuddyVisuals();
+
+    // 4. Sticky Operation Pill selection
+    const currentOp = window.mathEngine.settings.selectedOp || 'mixed';
+    this.quickOpGroup.querySelectorAll('.op-pill').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.op === currentOp);
+    });
+
+    // 5. Sticky Difficulty Preset
+    const currentDiff = window.mathEngine.settings.difficulty || 'medium';
+    this.quickDifficultyGroup.querySelectorAll('.diff-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.diff === currentDiff);
+    });
+
+    // 6. Streak & constellation tracking
     const todayStr = new Date().toISOString().slice(0, 10);
     const lastPlayedDate = localStorage.getItem('lyra_last_played_date');
     let streak = parseInt(localStorage.getItem('lyra_streak_count') || '1', 10);
@@ -131,10 +164,7 @@ class StarQuestApp {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayStr = yesterday.toISOString().slice(0, 10);
 
-      if (lastPlayedDate === yesterdayStr) {
-        // Continuing streak
-      } else if (lastPlayedDate !== todayStr) {
-        // Broken streak if more than 1 day skipped
+      if (lastPlayedDate !== yesterdayStr && lastPlayedDate !== todayStr) {
         streak = 1;
       }
     }
@@ -143,7 +173,7 @@ class StarQuestApp {
     this.constellationDays = constellationDays;
     this.streakCountEl.textContent = this.streak;
 
-    // 4. Timer recovery for today
+    // 7. Timer recovery
     const settings = window.mathEngine.settings;
     this.totalQuestSeconds = (settings.dailyMinutes || 5) * 60;
 
@@ -156,7 +186,7 @@ class StarQuestApp {
       this.questCompletedToday = questDone;
       if (this.questCompletedToday) {
         this.timerTitleEl.textContent = "Today's Quest Done! ⭐";
-        this.timerSubEl.textContent = "Keep practicing for extra stars!";
+        this.timerSubEl.textContent = "Keep playing for extra stars!";
       }
     } else {
       this.remainingSeconds = this.totalQuestSeconds;
@@ -166,7 +196,7 @@ class StarQuestApp {
 
     this.updateTimerDisplay();
 
-    // 5. Stars earned today
+    // 8. Stars earned today
     const savedStars = localStorage.getItem('lyra_stars_today');
     const starsDate = localStorage.getItem('lyra_stars_date');
     this.starsToday = (starsDate === todayStr && savedStars) ? parseInt(savedStars, 10) : 0;
@@ -181,13 +211,81 @@ class StarQuestApp {
       if (!isMuted) window.soundEngine.playKeyClick();
     });
 
-    // Theme Toggle
+    // Theme Toggle (Cycles Unicorn -> Cat -> Nebula -> Candy)
     this.themeToggleBtn.addEventListener('click', () => {
       this.currentThemeIndex = (this.currentThemeIndex + 1) % this.themes.length;
       const nextTheme = this.themes[this.currentThemeIndex];
       document.body.setAttribute('data-theme', nextTheme);
       localStorage.setItem('lyra_theme', nextTheme);
       if (window.soundEngine) window.soundEngine.playKeyClick();
+      if (window.easterEggs) {
+        window.easterEggs.showMascotMessage(`🎨 Theme: ${nextTheme.toUpperCase()}!`, 2000);
+      }
+    });
+
+    // Buddy Switcher (Click to cycle Unicorn, Cat, Caticorn, Star)
+    this.buddySwitchBtn.addEventListener('click', () => {
+      this.currentBuddyIndex = (this.currentBuddyIndex + 1) % this.buddies.length;
+      this.applyBuddyVisuals();
+      const buddy = this.buddies[this.currentBuddyIndex];
+      localStorage.setItem('lyra_active_buddy', buddy.id);
+
+      if (buddy.id === 'cat' && window.soundEngine) {
+        window.soundEngine.playCatMeow();
+      } else if (buddy.id === 'unicorn' && window.soundEngine) {
+        window.soundEngine.playUnicornSparkle();
+      } else if (window.soundEngine) {
+        window.soundEngine.playKeyClick();
+      }
+
+      if (window.easterEggs) {
+        window.easterEggs.showMascotMessage(buddy.speech, 3000);
+      }
+    });
+
+    // Quick Operation Selector (Sticky single-operation pill buttons)
+    this.quickOpGroup.addEventListener('click', (e) => {
+      const pill = e.target.closest('.op-pill');
+      if (!pill) return;
+      const op = pill.dataset.op;
+
+      this.quickOpGroup.querySelectorAll('.op-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+
+      window.mathEngine.setOperation(op);
+      if (window.soundEngine) window.soundEngine.playKeyClick();
+
+      const messages = {
+        'mixed': '🎲 Mixed Math Mode! Adding, subtracting & multiplying!',
+        'add': '➕ Just Adding Mode activated!',
+        'sub': '➖ Just Subtracting Mode activated!',
+        'mul': '✖️ Just Multiplying Mode activated!'
+      };
+      if (window.easterEggs) window.easterEggs.showMascotMessage(messages[op] || '', 2500);
+
+      this.nextProblem();
+    });
+
+    // Quick Difficulty Presets (Sticky: Gentle, Just Right, Challenge)
+    this.quickDifficultyGroup.addEventListener('click', (e) => {
+      const btn = e.target.closest('.diff-btn');
+      if (!btn) return;
+      const diff = btn.dataset.diff;
+
+      this.quickDifficultyGroup.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      window.mathEngine.setDifficulty(diff);
+      if (window.soundEngine) window.soundEngine.playKeyClick();
+
+      const diffMsg = {
+        'gentle': '🐣 Gentle Mode: Facts within 10 & cozy tables!',
+        'medium': '🌟 Just Right: Grade 3 standard facts!',
+        'challenge': '🚀 Challenge Wizard: Bigger sums and power tables!'
+      };
+      if (window.easterEggs) window.easterEggs.showMascotMessage(diffMsg[diff] || '', 2500);
+
+      this.nextProblem();
     });
 
     // Constellation Modal
@@ -201,38 +299,8 @@ class StarQuestApp {
     this.resetTodayBtn.addEventListener('click', () => this.resetTodayTimer());
     this.resetAllDataBtn.addEventListener('click', () => this.resetAllData());
 
-    // Mode Navigation Tabs
-    this.tabDailyQuest.addEventListener('click', () => this.switchMode('daily'));
-    this.tabPracticeLab.addEventListener('click', () => this.switchMode('lab'));
-
     // Pause / Play Timer
     this.pausePlayBtn.addEventListener('click', () => this.togglePauseTimer());
-
-    // Lab Filter Chips
-    if (this.labOpChips) {
-      this.labOpChips.addEventListener('click', (e) => {
-        const chip = e.target.closest('.chip');
-        if (!chip) return;
-        this.labOpChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        this.labFilter.op = chip.dataset.op;
-
-        // Show table dropdown if multiplication is selected
-        if (this.labFilter.op === 'mul') {
-          this.labMulTableGroup.classList.remove('hidden');
-        } else {
-          this.labMulTableGroup.classList.add('hidden');
-        }
-        this.nextProblem();
-      });
-    }
-
-    if (this.labTableSelect) {
-      this.labTableSelect.addEventListener('change', (e) => {
-        this.labFilter.table = e.target.value;
-        this.nextProblem();
-      });
-    }
 
     // Keypad Touch / Click Listeners
     if (this.keypad) {
@@ -242,7 +310,6 @@ class StarQuestApp {
         const key = btn.dataset.key;
         this.handleKeyInput(key);
 
-        // Visual press state
         btn.classList.add('key-pressed');
         setTimeout(() => btn.classList.remove('key-pressed'), 120);
       });
@@ -250,7 +317,6 @@ class StarQuestApp {
 
     // Physical Keyboard Listener
     window.addEventListener('keydown', (e) => {
-      // Ignore if a modal input/select has focus
       if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT') return;
 
       if (e.key >= '0' && e.key <= '9') {
@@ -278,8 +344,35 @@ class StarQuestApp {
     });
     this.keepPracticingBtn.addEventListener('click', () => {
       this.celebrationModal.classList.add('hidden');
-      this.switchMode('lab');
     });
+  }
+
+  applyBuddyVisuals() {
+    const buddy = this.buddies[this.currentBuddyIndex];
+    this.currentBuddyEmoji.textContent = buddy.emoji;
+    this.currentBuddyName.textContent = buddy.name;
+
+    const horn = this.mascotHorn;
+    const catEars = this.mascotCatEars;
+    const whiskers = this.mascotWhiskers;
+
+    if (buddy.id === 'unicorn') {
+      if (horn) horn.classList.remove('hidden');
+      if (catEars) catEars.classList.add('hidden');
+      if (whiskers) whiskers.classList.add('hidden');
+    } else if (buddy.id === 'cat') {
+      if (horn) horn.classList.add('hidden');
+      if (catEars) catEars.classList.remove('hidden');
+      if (whiskers) whiskers.classList.remove('hidden');
+    } else if (buddy.id === 'caticorn') {
+      if (horn) horn.classList.remove('hidden');
+      if (catEars) catEars.classList.remove('hidden');
+      if (whiskers) whiskers.classList.remove('hidden');
+    } else {
+      if (horn) horn.classList.add('hidden');
+      if (catEars) catEars.classList.add('hidden');
+      if (whiskers) whiskers.classList.add('hidden');
+    }
   }
 
   closeAllModals() {
@@ -287,22 +380,6 @@ class StarQuestApp {
     this.celebrationModal.classList.add('hidden');
     this.constellationModal.classList.add('hidden');
     this.settingsModal.classList.add('hidden');
-  }
-
-  switchMode(newMode) {
-    this.mode = newMode;
-    if (newMode === 'daily') {
-      this.tabDailyQuest.classList.add('active');
-      this.tabPracticeLab.classList.remove('active');
-      this.questStatusCard.classList.remove('hidden');
-      this.labFilterBar.classList.add('hidden');
-    } else {
-      this.tabDailyQuest.classList.remove('active');
-      this.tabPracticeLab.classList.add('active');
-      this.questStatusCard.classList.add('hidden');
-      this.labFilterBar.classList.remove('hidden');
-    }
-    this.nextProblem();
   }
 
   // =========================================================================
@@ -316,7 +393,7 @@ class StarQuestApp {
     this.feedbackBanner.textContent = '';
     this.feedbackBanner.className = 'feedback-banner';
 
-    this.currentProblem = window.mathEngine.generateProblem(this.mode, this.labFilter);
+    this.currentProblem = window.mathEngine.generateProblem('daily');
     this.renderProblem();
   }
 
@@ -338,7 +415,7 @@ class StarQuestApp {
         this.answerTextEl.textContent = this.inputBuffer;
         if (window.soundEngine) window.soundEngine.playKeyClick();
 
-        // Auto-check if length reaches expected answer length
+        // Auto-check when reaching expected length
         if (this.inputBuffer.length === this.currentProblem.expectedLength) {
           this.checkAnswer();
         }
@@ -377,23 +454,26 @@ class StarQuestApp {
     this.starsToday++;
     this.starsEarnedEl.textContent = this.starsToday;
 
-    // Save stars
     const todayStr = new Date().toISOString().slice(0, 10);
     localStorage.setItem('lyra_stars_today', this.starsToday);
     localStorage.setItem('lyra_stars_date', todayStr);
 
-    // Audio & Visual celebratory feedback
     if (window.soundEngine) {
       window.soundEngine.playCorrect(this.comboCount);
     }
 
     this.challengeCard.classList.add('correct-flash');
-    const cheers = ["✨ Stellar!", "🌟 Brilliant, Lyra!", "🚀 Star Speed!", "💫 Math Magic!", "🎉 Outstanding!"];
+    const cheers = [
+      "✨ Stellar job, Lyra!",
+      "🦄 Unicorn magic!",
+      "🐱 Pawsome job!",
+      "🚀 Math superstar!",
+      "🎉 Brilliant!"
+    ];
     const cheer = cheers[Math.floor(Math.random() * cheers.length)];
     this.feedbackBanner.textContent = cheer;
     this.feedbackBanner.className = 'feedback-banner success';
 
-    // Mini confetti burst on combo milestones
     if (this.comboCount % 5 === 0 && window.easterEggs) {
       window.easterEggs.burstConfetti(45);
     }
@@ -404,25 +484,40 @@ class StarQuestApp {
     }, 550);
   }
 
+  // CELEBRATE MISTAKES! Joyful, growth mindset, and silly encouragement
   handleIncorrectAnswer() {
     this.comboCount = 0;
+    
+    // Play upbeat cartoon boing instead of any error buzz
     if (window.soundEngine) {
-      window.soundEngine.playTryAgain();
+      window.soundEngine.playEncourageBoing();
     }
 
-    // Queue for spaced repetition
+    // Spaced repetition queue
     window.mathEngine.recordStruggle(this.currentProblem);
 
-    this.challengeCard.classList.add('shake-wrong');
-    this.feedbackBanner.textContent = "Almost! Tap 'Show Me' if you need a hint 💡";
-    this.feedbackBanner.className = 'feedback-banner try-again';
+    // Playful gentle bounce
+    this.challengeCard.classList.add('gentle-bounce');
+
+    // Cheerful mistake celebration message
+    const cheer = window.easterEggs
+      ? window.easterEggs.getMistakeEncouragement()
+      : "🌱 Brain stretch! You're super close! Try again 💡";
+
+    this.feedbackBanner.textContent = cheer;
+    this.feedbackBanner.className = 'feedback-banner mistake-cheer';
+
+    // Spawn 10 little heart/star particles for effort
+    if (window.easterEggs) {
+      window.easterEggs.burstConfetti(12, ['#ffd166', '#ff70a6', '#00f5d4']);
+    }
 
     setTimeout(() => {
-      this.challengeCard.classList.remove('shake-wrong');
+      this.challengeCard.classList.remove('gentle-bounce');
       this.inputBuffer = '';
       this.answerTextEl.textContent = '';
       this.isChecking = false;
-    }, 450);
+    }, 650);
   }
 
   // =========================================================================
@@ -433,12 +528,11 @@ class StarQuestApp {
     if (this.timerInterval) clearInterval(this.timerInterval);
 
     this.timerInterval = setInterval(() => {
-      if (this.isPaused || this.questCompletedToday || this.mode !== 'daily') return;
+      if (this.isPaused || this.questCompletedToday) return;
 
       this.remainingSeconds--;
       this.updateTimerDisplay();
 
-      // Persist timer state
       const todayStr = new Date().toISOString().slice(0, 10);
       localStorage.setItem('lyra_timer_remaining', this.remainingSeconds);
       localStorage.setItem('lyra_timer_date', todayStr);
@@ -454,8 +548,7 @@ class StarQuestApp {
     const secs = Math.max(0, this.remainingSeconds) % 60;
     this.questTimerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
-    // Update circular progress SVG
-    const circumference = 2 * Math.PI * 23; // r=23 => ~144.5
+    const circumference = 2 * Math.PI * 23;
     const progress = Math.max(0, this.remainingSeconds) / this.totalQuestSeconds;
     const offset = circumference * (1 - progress);
     this.timerProgressRing.style.strokeDashoffset = offset;
@@ -484,7 +577,6 @@ class StarQuestApp {
     this.questCompletedToday = true;
     localStorage.setItem('lyra_quest_done_today', 'true');
 
-    // Update streak and constellation
     const todayStr = new Date().toISOString().slice(0, 10);
     const lastPlayed = localStorage.getItem('lyra_last_played_date');
     if (lastPlayed !== todayStr) {
@@ -496,11 +588,12 @@ class StarQuestApp {
       this.streakCountEl.textContent = this.streak;
     }
 
-    // Audio & Confetti
     if (window.soundEngine) window.soundEngine.playCelebration();
-    if (window.easterEggs) window.easterEggs.burstConfetti(140);
+    if (window.easterEggs) {
+      window.easterEggs.burstConfetti(140);
+      window.easterEggs.spawnGallopingUnicorn();
+    }
 
-    // Populate Celebration Modal
     const accuracy = this.sessionAttemptCount > 0
       ? Math.round((this.sessionSolvedCount / this.sessionAttemptCount) * 100)
       : 100;
@@ -524,13 +617,11 @@ class StarQuestApp {
     this.helpTitle.textContent = `✨ Breaking Down ${data.title}`;
     this.helpContentBody.innerHTML = '';
 
-    // Render Strategy Tip Box
     const tipBox = document.createElement('div');
     tipBox.className = 'help-tip-box';
     tipBox.innerHTML = `<strong>Concept:</strong> ${data.tip}`;
     this.helpContentBody.appendChild(tipBox);
 
-    // Render Visual Manipulatives
     const visualContainer = document.createElement('div');
     visualContainer.className = 'help-visual-container';
 
@@ -557,11 +648,14 @@ class StarQuestApp {
     grid.className = 'star-array-grid';
     grid.style.gridTemplateColumns = `repeat(${data.cols}, 1fr)`;
 
+    const buddy = this.buddies[this.currentBuddyIndex].id;
+    const symbol = (buddy === 'unicorn') ? '🦄' : ((buddy === 'cat') ? '🐱' : '★');
+
     for (let r = 1; r <= data.rows; r++) {
       for (let c = 1; c <= data.cols; c++) {
         const star = document.createElement('span');
         star.className = 'array-star';
-        star.textContent = '★';
+        star.textContent = symbol;
         star.title = `Row ${r}, Column ${c}`;
 
         if (data.highlightRow && r > data.highlightRow) {
@@ -573,7 +667,7 @@ class StarQuestApp {
 
     const labels = document.createElement('div');
     labels.className = 'array-labels';
-    labels.innerHTML = `<span>${data.rows} Rows</span><span>${data.cols} Columns = <strong>${data.total} Stars</strong></span>`;
+    labels.innerHTML = `<span>${data.rows} Rows</span><span>${data.cols} Columns = <strong>${data.total} Total</strong></span>`;
 
     container.appendChild(grid);
     container.appendChild(labels);
@@ -583,11 +677,9 @@ class StarQuestApp {
     const wrapper = document.createElement('div');
     wrapper.className = 'ten-frames-wrapper';
 
-    // Frame 1 (10 slots)
     const frame1 = document.createElement('div');
     frame1.className = 'ten-frame-box';
 
-    // Frame 2 (10 slots)
     const frame2 = document.createElement('div');
     frame2.className = 'ten-frame-box';
 
@@ -630,7 +722,7 @@ class StarQuestApp {
 
     const labels = document.createElement('div');
     labels.className = 'array-labels';
-    labels.innerHTML = `<span>Cyan: ${num1}</span><span>Magenta: ${num2}</span><span>Total: <strong>${total}</strong></span>`;
+    labels.innerHTML = `<span>First: ${num1}</span><span>Second: ${num2}</span><span>Total: <strong>${total}</strong></span>`;
 
     container.appendChild(wrapper);
     container.appendChild(labels);
@@ -650,7 +742,6 @@ class StarQuestApp {
       const dot = document.createElement('div');
       dot.className = 'ten-frame-dot dot-primary';
 
-      // Crossed out dots
       if (i >= data.remain) {
         dot.classList.add('dot-crossed');
       }
@@ -697,53 +788,50 @@ class StarQuestApp {
       ctx.fillRect(x, y, 1.5, 1.5);
     }
 
-    // 12 Constellation Nodes (Lyra the Harp Constellation shape!)
+    // Monoceros Unicorn Constellation Shape!
     const starCoords = [
-      { x: w * 0.50, y: h * 0.18, name: 'Vega' },
-      { x: w * 0.38, y: h * 0.32 },
-      { x: w * 0.44, y: h * 0.50 },
-      { x: w * 0.60, y: h * 0.48 },
-      { x: w * 0.66, y: h * 0.30 },
-      { x: w * 0.35, y: h * 0.70 },
-      { x: w * 0.52, y: h * 0.82 },
-      { x: w * 0.68, y: h * 0.72 },
-      { x: w * 0.22, y: h * 0.45 },
-      { x: w * 0.78, y: h * 0.45 },
-      { x: w * 0.28, y: h * 0.85 },
-      { x: w * 0.75, y: h * 0.85 }
+      { x: w * 0.22, y: h * 0.22 }, // Horn tip
+      { x: w * 0.35, y: h * 0.32 }, // Head
+      { x: w * 0.48, y: h * 0.40 }, // Neck
+      { x: w * 0.62, y: h * 0.42 }, // Back
+      { x: w * 0.78, y: h * 0.38 }, // Tail
+      { x: w * 0.42, y: h * 0.65 }, // Front leg
+      { x: w * 0.72, y: h * 0.72 }, // Back leg
+      { x: w * 0.30, y: h * 0.55 },
+      { x: w * 0.58, y: h * 0.60 },
+      { x: w * 0.85, y: h * 0.55 },
+      { x: w * 0.20, y: h * 0.78 },
+      { x: w * 0.80, y: h * 0.82 }
     ];
 
     const totalLit = Math.min(this.constellationDays, starCoords.length);
 
-    // Draw connection lines between lit stars
     if (totalLit > 1) {
       ctx.beginPath();
       ctx.moveTo(starCoords[0].x, starCoords[0].y);
       for (let i = 1; i < totalLit; i++) {
         ctx.lineTo(starCoords[i].x, starCoords[i].y);
       }
-      ctx.strokeStyle = 'rgba(0, 245, 212, 0.7)';
+      ctx.strokeStyle = 'rgba(244, 114, 182, 0.8)';
       ctx.lineWidth = 2.5;
-      ctx.shadowColor = '#00f5d4';
+      ctx.shadowColor = '#f472b6';
       ctx.shadowBlur = 12;
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
 
-    // Draw star nodes
     starCoords.forEach((pt, idx) => {
       const isLit = idx < totalLit;
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, isLit ? 7 : 4, 0, Math.PI * 2);
 
       if (isLit) {
-        ctx.fillStyle = '#ffd166';
-        ctx.shadowColor = '#ffd166';
+        ctx.fillStyle = (idx === 0) ? '#00f5d4' : '#ffd166';
+        ctx.shadowColor = ctx.fillStyle;
         ctx.shadowBlur = 15;
         ctx.fill();
         ctx.shadowBlur = 0;
 
-        // Little glow ring
         ctx.beginPath();
         ctx.arc(pt.x, pt.y, 11, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255, 209, 102, 0.4)';
@@ -755,16 +843,14 @@ class StarQuestApp {
       }
     });
 
-    // Update text
     this.constellationDaysCount.textContent = `${this.constellationDays} Days Practiced 🌟`;
     
-    // Rank title progression
     const ranks = [
-      { days: 0, title: "🌟 Starlight Apprentice" },
-      { days: 3, title: "🚀 Cosmic Voyager" },
+      { days: 0, title: "🦄 Celestial Apprentice" },
+      { days: 3, title: "🐱 Cosmic Kitten Voyager" },
       { days: 7, title: "✨ Galaxy Commander" },
-      { days: 14, title: "🪐 Constellation Master" },
-      { days: 30, title: "👑 Legend of the Lyra Star" }
+      { days: 14, title: "🪐 Monoceros Unicorn Master" },
+      { days: 30, title: "👑 Legend of the Cosmic Caticorn" }
     ];
     let userRank = ranks[0].title;
     for (const r of ranks) {
@@ -780,12 +866,13 @@ class StarQuestApp {
   openSettingsModal() {
     const s = window.mathEngine.settings;
     this.dailyMinutesSelect.value = String(s.dailyMinutes || 5);
-    this.settingOpAdd.checked = !!s.operations.add;
-    this.settingOpSub.checked = !!s.operations.sub;
-    this.settingOpMul.checked = !!s.operations.mul;
+    this.settingOpAdd.checked = !!s.customOps.add;
+    this.settingOpSub.checked = !!s.customOps.sub;
+    this.settingOpMul.checked = !!s.customOps.mul;
     this.addMaxSumSelect.value = String(s.addMaxSum || 20);
+    this.modalDifficultySelect.value = s.difficulty || 'medium';
+    this.modalBuddySelect.value = this.currentBuddy;
 
-    // Build 0-12 table toggle buttons
     this.settingsTableGrid.innerHTML = '';
     for (let i = 0; i <= 12; i++) {
       const btn = document.createElement('button');
@@ -817,9 +904,13 @@ class StarQuestApp {
       }
     });
 
+    const chosenDiff = this.modalDifficultySelect.value;
+    const chosenBuddy = this.modalBuddySelect.value;
+
     const newSettings = {
       dailyMinutes: parseInt(this.dailyMinutesSelect.value, 10),
-      operations: {
+      difficulty: chosenDiff,
+      customOps: {
         add: this.settingOpAdd.checked,
         sub: this.settingOpSub.checked,
         mul: this.settingOpMul.checked
@@ -830,12 +921,26 @@ class StarQuestApp {
 
     window.mathEngine.saveSettings(newSettings);
     this.totalQuestSeconds = newSettings.dailyMinutes * 60;
+
+    // Apply buddy
+    const bIdx = this.buddies.findIndex(b => b.id === chosenBuddy);
+    if (bIdx !== -1) {
+      this.currentBuddyIndex = bIdx;
+      this.applyBuddyVisuals();
+      localStorage.setItem('lyra_active_buddy', chosenBuddy);
+    }
+
+    // Sync quick difficulty pills
+    this.quickDifficultyGroup.querySelectorAll('.diff-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.diff === chosenDiff);
+    });
+
     this.closeSettingsModal();
     this.nextProblem();
   }
 
   resetTodayTimer() {
-    if (confirm("Reset today's 5-minute timer so Lyra can practice again?")) {
+    if (confirm("Reset today's timer so Lyra can practice again?")) {
       const settings = window.mathEngine.settings;
       this.totalQuestSeconds = (settings.dailyMinutes || 5) * 60;
       this.remainingSeconds = this.totalQuestSeconds;
@@ -857,7 +962,6 @@ class StarQuestApp {
   }
 }
 
-// Instantiate on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new StarQuestApp();
 });

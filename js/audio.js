@@ -1,6 +1,7 @@
 /**
  * Lyra's Star Quest - Web Audio Sound Synthesizer
  * Pure Web Audio API: 100% offline, zero external audio asset dependencies.
+ * Now with cute cat meows, magical unicorn sparkle chimes, and silly cartoon boings!
  */
 class SoundEngine {
   constructor() {
@@ -43,8 +44,8 @@ class SoundEngine {
 
       osc.type = 'sine';
       const now = this.ctx.currentTime;
-      osc.frequency.setValueAtTime(420, now);
-      osc.frequency.exponentialRampToValueAtTime(120, now + 0.04);
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(140, now + 0.04);
 
       gain.gain.setValueAtTime(0.2, now);
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
@@ -54,9 +55,7 @@ class SoundEngine {
 
       osc.start(now);
       osc.stop(now + 0.04);
-    } catch (e) {
-      // Audio fallback gracefully
-    }
+    } catch (e) {}
   }
 
   // Cheerful starlight chime when Lyra solves a problem
@@ -67,9 +66,8 @@ class SoundEngine {
 
     try {
       const now = this.ctx.currentTime;
-      // Pentatonic pitch lift based on current session combo
       const baseFreq = 523.25; // C5
-      const scale = [1, 1.25, 1.5, 1.667, 2.0]; // Major pentatonic ratios
+      const scale = [1, 1.25, 1.5, 1.667, 2.0];
       const noteOffset = Math.min(streak, 4);
 
       const notes = [
@@ -97,8 +95,8 @@ class SoundEngine {
     } catch (e) {}
   }
 
-  // Gentle low bloop when answer needs another try (encouraging, not jarring)
-  playTryAgain() {
+  // CELEBRATE MISTAKES! Cheerful, goofy, cartoon boing/whoop so getting it wrong feels funny & encouraging
+  playEncourageBoing() {
     if (this.isMuted) return;
     this.init();
     if (!this.ctx) return;
@@ -109,17 +107,78 @@ class SoundEngine {
       const gain = this.ctx.createGain();
 
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(260, now);
-      osc.frequency.exponentialRampToValueAtTime(195, now + 0.18);
+      // Cartoon cheerful upward springy boing
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(540, now + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.25);
 
       gain.gain.setValueAtTime(0.18, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start(now);
-      osc.stop(now + 0.18);
+      osc.stop(now + 0.26);
+    } catch (e) {}
+  }
+
+  // Cute synthesized Cat Meow! 🐱
+  playCatMeow() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'triangle';
+      // Meow pitch contour: rise, dip, rise gently
+      osc.frequency.setValueAtTime(450, now);
+      osc.frequency.exponentialRampToValueAtTime(750, now + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(580, now + 0.32);
+
+      gain.gain.setValueAtTime(0.01, now);
+      gain.gain.linearRampToValueAtTime(0.22, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } catch (e) {}
+  }
+
+  // Magical Unicorn Sparkle Chimes! 🦄
+  playUnicornSparkle() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const freqs = [659.25, 880.0, 1046.5, 1318.5, 1567.98, 2093.0]; // E5 to C7 magical glissando
+
+      freqs.forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        const start = now + idx * 0.05;
+        osc.frequency.setValueAtTime(freq, start);
+
+        gain.gain.setValueAtTime(0.18, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.32);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(start);
+        osc.stop(start + 0.32);
+      });
     } catch (e) {}
   }
 
@@ -131,7 +190,7 @@ class SoundEngine {
 
     try {
       const now = this.ctx.currentTime;
-      const chord = [523.25, 659.25, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, E6
+      const chord = [523.25, 659.25, 783.99, 1046.50, 1318.51];
 
       chord.forEach((freq, idx) => {
         const osc = this.ctx.createOscillator();
