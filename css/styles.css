@@ -24,7 +24,7 @@
   --enter-text: #ffffff;
   --key-glow: 244, 114, 182; /* keypad border + glow color (RGB) */
   
-  --font-display: 'Fredoka', cursive, sans-serif;
+  --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-body: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   
   --radius-sm: 12px;
@@ -126,7 +126,7 @@ body[data-theme="arcade"] {
   --key-active: #ff2ecf;
   --enter-bg: linear-gradient(135deg, #ff2ecf 0%, #9b5cff 55%, #22f0ff 100%);
   --enter-text: #ffffff;
-  --font-arcade: 'Press Start 2P', 'Fredoka', monospace;
+  --font-arcade: 'Press Start 2P', 'Outfit', monospace;
   --radius-lg: 18px;
   --radius-md: 14px;
 }
