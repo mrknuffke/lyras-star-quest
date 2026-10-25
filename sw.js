@@ -1,5 +1,5 @@
 // Service Worker for Star Quest (Offline PWA)
-const CACHE_NAME = 'lyras-star-quest-v7';
+const CACHE_NAME = 'lyras-star-quest-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS_TO_CACHE = [
   './js/math-engine.js',
   './js/easter-eggs.js',
   './js/badge.js',
+  './js/constellations.js',
   './js/app.js',
   './assets/icon.svg',
   './manifest.json'

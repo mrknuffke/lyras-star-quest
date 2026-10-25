@@ -146,11 +146,24 @@ class StarQuestApp {
     this.helpContentBody = document.getElementById('helpContentBody');
 
     this.celebrationModal = document.getElementById('celebrationModal');
+    this.celebMainTitle = document.getElementById('celebMainTitle');
     this.celebSubtitle = document.getElementById('celebSubtitle');
     this.celebMascots = document.getElementById('celebMascots');
+    this.celebTabConstellationBtn = document.getElementById('celebTabConstellationBtn');
+    this.celebTabBadgeBtn = document.getElementById('celebTabBadgeBtn');
+    this.celebConstellationPanel = document.getElementById('celebConstellationPanel');
+    this.celebBadgePanel = document.getElementById('celebBadgePanel');
+    this.celebForgedHeading = document.getElementById('celebForgedHeading');
+    this.celebConstellationCanvas = document.getElementById('celebConstellationCanvas');
+    this.celebConstellationTitle = document.getElementById('celebConstellationTitle');
+    this.celebConstellationBestStar = document.getElementById('celebConstellationBestStar');
+    this.celebConstellationLore = document.getElementById('celebConstellationLore');
+    this.viewConstellationFromCelebBtn = document.getElementById('viewConstellationFromCelebBtn');
+    this.viewBadgeReportFromCelebBtn = document.getElementById('viewBadgeReportFromCelebBtn');
+    this.viewSkyFromBadgeBtn = document.getElementById('viewSkyFromBadgeBtn');
+    this.backToConstellationBtn = document.getElementById('backToConstellationBtn');
     this.badgeCanvas = document.getElementById('badgeCanvas');
     this.saveBadgeBtn = document.getElementById('saveBadgeBtn');
-    this.viewConstellationFromCelebBtn = document.getElementById('viewConstellationFromCelebBtn');
     this.keepPracticingBtn = document.getElementById('keepPracticingBtn');
 
     this.badgeGalleryBtn = document.getElementById('badgeGalleryBtn');
@@ -165,11 +178,47 @@ class StarQuestApp {
     this.gallerySaveBtn = document.getElementById('gallerySaveBtn');
     this.galleryBackBtn = document.getElementById('galleryBackBtn');
 
+    // Sky Gallery Elements
     this.constellationModal = document.getElementById('constellationModal');
     this.closeConstellationBtn = document.getElementById('closeConstellationBtn');
-    this.constellationCanvas = document.getElementById('constellationCanvas');
+    this.skyConstellationCount = document.getElementById('skyConstellationCount');
     this.constellationDaysCount = document.getElementById('constellationDaysCount');
     this.currentRankBadge = document.getElementById('currentRankBadge');
+    this.skyViewDomeBtn = document.getElementById('skyViewDomeBtn');
+    this.skyViewCardsBtn = document.getElementById('skyViewCardsBtn');
+    this.skyDomeView = document.getElementById('skyDomeView');
+    this.skyCardsView = document.getElementById('skyCardsView');
+    this.skyCardsGrid = document.getElementById('skyCardsGrid');
+    this.skyCanvasContainer = document.getElementById('skyCanvasContainer');
+    this.constellationCanvas = document.getElementById('constellationCanvas');
+    this.skyConstellationSpotlight = document.getElementById('skyConstellationSpotlight');
+    this.spotlightIcon = document.getElementById('spotlightIcon');
+    this.spotlightTitle = document.getElementById('spotlightTitle');
+    this.spotlightEnglish = document.getElementById('spotlightEnglish');
+    this.spotlightStar = document.getElementById('spotlightStar');
+    this.spotlightLore = document.getElementById('spotlightLore');
+    this.spotlightStatus = document.getElementById('spotlightStatus');
+    this.closeSpotlightBtn = document.getElementById('closeSpotlightBtn');
+    this.centerSpotlightBtn = document.getElementById('centerSpotlightBtn');
+    this.constellationRibbon = document.getElementById('constellationRibbon');
+    this.skyZoomInBtn = document.getElementById('skyZoomInBtn');
+    this.skyZoomOutBtn = document.getElementById('skyZoomOutBtn');
+    this.skyResetBtn = document.getElementById('skyResetBtn');
+    this.saveSkySnapshotBtn = document.getElementById('saveSkySnapshotBtn');
+    this.testCompleteQuestBtn = document.getElementById('testCompleteQuestBtn');
+
+    // Sky gallery interaction state
+    this.constellationAnimTimer = null;
+    this.skyRafId = null;
+    this.activeConstellation = null;
+    this.isSkyDragging = false;
+    this.skyDragStartX = 0;
+    this.skyDragStartY = 0;
+    this.skyDragStartPanX = 0;
+    this.skyDragStartPanY = 0;
+    this.skyHasDragged = false;
+    this.skyViewMode = 'sky';
+    window.starQuestApp = this;
 
     // Fact Mastery Garden Modal (Leitner tracking)
     this.masteryGardenBtn = document.getElementById('masteryGardenBtn');
@@ -479,14 +528,42 @@ class StarQuestApp {
     this.gotItHelpBtn.addEventListener('click', () => this.closeHelpModal());
 
     // Celebration modal actions
+    if (this.celebTabConstellationBtn) {
+      this.celebTabConstellationBtn.addEventListener('click', () => this.switchCelebTab('constellation'));
+    }
+    if (this.celebTabBadgeBtn) {
+      this.celebTabBadgeBtn.addEventListener('click', () => this.switchCelebTab('badge'));
+    }
+    if (this.viewBadgeReportFromCelebBtn) {
+      this.viewBadgeReportFromCelebBtn.addEventListener('click', () => this.switchCelebTab('badge'));
+    }
+    if (this.backToConstellationBtn) {
+      this.backToConstellationBtn.addEventListener('click', () => this.switchCelebTab('constellation'));
+    }
+    if (this.viewSkyFromBadgeBtn) {
+      this.viewSkyFromBadgeBtn.addEventListener('click', () => {
+        this.celebrationModal.classList.add('hidden');
+        this.openConstellationModal(this.activeConstellation ? this.activeConstellation.id : null);
+      });
+    }
     this.viewConstellationFromCelebBtn.addEventListener('click', () => {
       this.celebrationModal.classList.add('hidden');
-      this.openConstellationModal();
+      this.openConstellationModal(this.activeConstellation ? this.activeConstellation.id : null);
     });
     this.keepPracticingBtn.addEventListener('click', () => {
       this.celebrationModal.classList.add('hidden');
     });
     this.saveBadgeBtn.addEventListener('click', () => this.saveBadge());
+
+    // Setup Sky Gallery toolbar & viewport interactions
+    this.setupSkyGalleryEvents();
+
+    if (this.testCompleteQuestBtn) {
+      this.testCompleteQuestBtn.addEventListener('click', () => {
+        this.settingsModal.classList.add('hidden');
+        this.completeDailyQuest();
+      });
+    }
   }
 
   // Build the drill buttons for the current operation (hidden in Mixed mode)
@@ -789,12 +866,16 @@ class StarQuestApp {
     const lastPlayed = localStorage.getItem('lyra_last_played_date');
     if (lastPlayed !== todayStr) {
       this.streak++;
-      this.constellationDays++;
       localStorage.setItem('lyra_streak_count', this.streak);
-      localStorage.setItem('lyra_constellation_days', this.constellationDays);
       localStorage.setItem('lyra_last_played_date', todayStr);
       this.streakCountEl.textContent = this.streak;
     }
+
+    // Forge a real, meaningful constellation!
+    const forgeRes = window.constellationManager.forgeNextConstellation();
+    this.activeConstellation = forgeRes.constellation;
+    this.constellationDays = forgeRes.totalUnlocked;
+    localStorage.setItem('lyra_constellation_days', this.constellationDays);
 
     if (window.soundEngine) window.soundEngine.playCelebration();
     if (window.easterEggs) {
@@ -807,8 +888,29 @@ class StarQuestApp {
     this.celebMascots.textContent = `${this.buddies[this.currentBuddyIndex].emoji}🏆🎮`;
 
     this.timerTitleEl.textContent = "Quest Cleared! 🏆";
-    this.timerSubEl.textContent = "New star lit up on your Sky Map!";
+    this.timerSubEl.textContent = `${forgeRes.constellation.name} lit up in your Night Sky!`;
 
+    // Populate newly forged constellation card
+    if (this.celebForgedHeading) {
+      this.celebForgedHeading.textContent = forgeRes.isNew
+        ? 'NEW CONSTELLATION FORGED!'
+        : 'CONSTELLATION RE-CHARGED!';
+    }
+    if (this.celebConstellationTitle) {
+      this.celebConstellationTitle.textContent = `${forgeRes.constellation.icon} ${forgeRes.constellation.name.toUpperCase()} — ${forgeRes.constellation.english}`;
+    }
+    if (this.celebConstellationBestStar) {
+      this.celebConstellationBestStar.textContent = `🌟 Key Star: ${forgeRes.constellation.bestStar}`;
+    }
+    if (this.celebConstellationLore) {
+      this.celebConstellationLore.textContent = forgeRes.constellation.lore;
+    }
+
+    // Default celebration view to the Constellation Forge reveal
+    this.switchCelebTab('constellation');
+    this.animateConstellationForge(forgeRes.constellation);
+
+    // Build badge in background for the badge tab
     this.badgeReport = window.badgeMaker.buildReport({
       streak: this.streak,
       minutes,
@@ -820,6 +922,49 @@ class StarQuestApp {
     window.badgeMaker.addToGallery(this.badgeReport);
 
     this.celebrationModal.classList.remove('hidden');
+  }
+
+  switchCelebTab(tab) {
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+    const isConst = tab === 'constellation';
+    if (this.celebTabConstellationBtn) this.celebTabConstellationBtn.classList.toggle('active', isConst);
+    if (this.celebTabBadgeBtn) this.celebTabBadgeBtn.classList.toggle('active', !isConst);
+    if (this.celebConstellationPanel) this.celebConstellationPanel.classList.toggle('hidden', !isConst);
+    if (this.celebBadgePanel) this.celebBadgePanel.classList.toggle('hidden', isConst);
+  }
+
+  animateConstellationForge(constellation) {
+    if (!this.celebConstellationCanvas || !window.constellationManager) return;
+    if (this.constellationAnimTimer) cancelAnimationFrame(this.constellationAnimTimer);
+
+    const canvas = this.celebConstellationCanvas;
+    const startTime = performance.now();
+    const duration = 2000;
+    let lastStarIdx = -1;
+
+    const frame = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(1.0, elapsed / duration);
+
+      const totalStars = constellation.stars.length;
+      const currentStar = Math.floor(Math.min(1.0, progress * 1.3) * totalStars);
+      if (currentStar > lastStarIdx && currentStar < totalStars) {
+        lastStarIdx = currentStar;
+        if (window.soundEngine) window.soundEngine.playConstellationStar(currentStar);
+      }
+
+      window.constellationManager.drawSingleConstellation(canvas, constellation, progress, { showStarNames: true });
+
+      if (progress < 1.0) {
+        this.constellationAnimTimer = requestAnimationFrame(frame);
+      } else {
+        this.constellationAnimTimer = null;
+        if (window.soundEngine) window.soundEngine.playConstellationComplete();
+        if (window.easterEggs) window.easterEggs.burstConfetti(50, [constellation.color, '#ffd166', '#00f5d4']);
+      }
+    };
+
+    this.constellationAnimTimer = requestAnimationFrame(frame);
   }
 
   async saveBadge() {
@@ -1001,102 +1146,376 @@ class StarQuestApp {
   // Night Sky Constellation Modal & Canvas
   // =========================================================================
 
-  openConstellationModal() {
-    this.constellationModal.classList.remove('hidden');
-    this.drawConstellationSky();
+  // =========================================================================
+  // Celestial Sky Gallery Modal & Interactive Firmament
+  // =========================================================================
+
+  setupSkyGalleryEvents() {
+    if (!this.skyCanvasContainer || !this.constellationCanvas) return;
+
+    if (this.skyViewDomeBtn) {
+      this.skyViewDomeBtn.addEventListener('click', () => this.setSkyViewMode('sky'));
+    }
+    if (this.skyViewCardsBtn) {
+      this.skyViewCardsBtn.addEventListener('click', () => this.setSkyViewMode('cards'));
+    }
+
+    if (this.skyZoomInBtn) {
+      this.skyZoomInBtn.addEventListener('click', () => this.zoomSky(0.2));
+    }
+    if (this.skyZoomOutBtn) {
+      this.skyZoomOutBtn.addEventListener('click', () => this.zoomSky(-0.2));
+    }
+    if (this.skyResetBtn) {
+      this.skyResetBtn.addEventListener('click', () => this.resetSky());
+    }
+    if (this.saveSkySnapshotBtn) {
+      this.saveSkySnapshotBtn.addEventListener('click', () => this.saveSkySnapshot());
+    }
+
+    if (this.closeSpotlightBtn) {
+      this.closeSpotlightBtn.addEventListener('click', () => this.hideConstellationSpotlight());
+    }
+    if (this.centerSpotlightBtn) {
+      this.centerSpotlightBtn.addEventListener('click', () => this.centerCurrentSpotlight());
+    }
+
+    const canvas = this.constellationCanvas;
+    const container = this.skyCanvasContainer;
+
+    const startDrag = (clientX, clientY) => {
+      this.isSkyDragging = true;
+      this.skyHasDragged = false;
+      this.skyDragStartX = clientX;
+      this.skyDragStartY = clientY;
+      this.skyDragStartPanX = window.constellationManager.panX;
+      this.skyDragStartPanY = window.constellationManager.panY;
+      container.classList.add('grabbing');
+    };
+
+    const moveDrag = (clientX, clientY) => {
+      if (!this.isSkyDragging) return;
+      const dx = clientX - this.skyDragStartX;
+      const dy = clientY - this.skyDragStartY;
+      if (Math.hypot(dx, dy) > 4) this.skyHasDragged = true;
+
+      window.constellationManager.panX = this.skyDragStartPanX + dx;
+      window.constellationManager.panY = this.skyDragStartPanY + dy;
+    };
+
+    const endDrag = (clientX, clientY) => {
+      if (!this.isSkyDragging) return;
+      this.isSkyDragging = false;
+      container.classList.remove('grabbing');
+
+      if (!this.skyHasDragged) {
+        const rect = canvas.getBoundingClientRect();
+        const clickX = clientX - rect.left;
+        const clickY = clientY - rect.top;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        const hit = window.constellationManager.hitTest(
+          clickX * scaleX,
+          clickY * scaleY,
+          canvas.width,
+          canvas.height
+        );
+
+        if (hit) {
+          window.constellationManager.selectedId = hit.id;
+          this.showConstellationSpotlight(hit);
+          this.updateRibbonActive(hit.id);
+          if (window.soundEngine) window.soundEngine.playConstellationStar(3);
+        } else {
+          this.hideConstellationSpotlight();
+        }
+      }
+    };
+
+    container.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => {
+      if (this.isSkyDragging) moveDrag(e.clientX, e.clientY);
+    });
+    window.addEventListener('mouseup', (e) => {
+      if (this.isSkyDragging) endDrag(e.clientX, e.clientY);
+    });
+
+    container.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) startDrag(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    container.addEventListener('touchmove', (e) => {
+      if (this.isSkyDragging && e.touches.length === 1) {
+        moveDrag(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    container.addEventListener('touchend', (e) => {
+      if (this.isSkyDragging) {
+        const touch = e.changedTouches[0];
+        endDrag(touch ? touch.clientX : 0, touch ? touch.clientY : 0);
+      }
+    });
+
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      this.zoomSky(delta);
+    }, { passive: false });
+  }
+
+  openConstellationModal(spotlightId = null) {
     if (window.soundEngine) window.soundEngine.playKeyClick();
+    this.constellationModal.classList.remove('hidden');
+
+    this.resizeSkyCanvas();
+
+    const targetId = spotlightId || window.constellationManager.selectedId || 'lyra';
+    const target = window.constellationManager.getConstellation(targetId);
+    if (target) {
+      window.constellationManager.centerOnConstellation(target.id, this.constellationCanvas.width, this.constellationCanvas.height);
+      this.showConstellationSpotlight(target);
+    }
+
+    this.updateSkyGalleryUI();
+    this.renderConstellationRibbon();
+    this.setSkyViewMode(this.skyViewMode || 'sky');
+    this.startSkyRenderLoop();
   }
 
   closeConstellationModal() {
     this.constellationModal.classList.add('hidden');
+    if (this.skyRafId) {
+      cancelAnimationFrame(this.skyRafId);
+      this.skyRafId = null;
+    }
   }
 
-  drawConstellationSky() {
+  resizeSkyCanvas() {
     const canvas = this.constellationCanvas;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
+    const container = this.skyCanvasContainer;
+    if (!canvas || !container) return;
 
-    ctx.clearRect(0, 0, w, h);
+    const rect = container.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const targetW = Math.round((rect.width || 900) * dpr);
+    const targetH = Math.round((rect.height || 480) * dpr);
 
-    // Ambient stars in background
-    for (let i = 0; i < 45; i++) {
-      const x = (Math.sin(i * 99) * 0.5 + 0.5) * w;
-      const y = (Math.cos(i * 33) * 0.5 + 0.5) * h;
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.2 + (i % 5) * 0.1})`;
-      ctx.fillRect(x, y, 1.5, 1.5);
+    if (canvas.width !== targetW || canvas.height !== targetH) {
+      canvas.width = targetW;
+      canvas.height = targetH;
+    }
+  }
+
+  startSkyRenderLoop() {
+    if (this.skyRafId) cancelAnimationFrame(this.skyRafId);
+
+    const loop = () => {
+      if (this.constellationModal.classList.contains('hidden')) {
+        this.skyRafId = null;
+        return;
+      }
+      if (this.skyViewMode !== 'cards') {
+        window.constellationManager.drawSkyGallery(this.constellationCanvas);
+      }
+      this.skyRafId = requestAnimationFrame(loop);
+    };
+
+    this.skyRafId = requestAnimationFrame(loop);
+  }
+
+  updateSkyGalleryUI() {
+    const mgr = window.constellationManager;
+    const totalUnlocked = mgr.unlockedIds.length;
+    const totalCatalog = mgr.catalog.length;
+
+    if (this.skyConstellationCount) {
+      this.skyConstellationCount.textContent = `✨ ${totalUnlocked} of ${totalCatalog} Constellations Present`;
+    }
+    if (this.constellationDaysCount) {
+      this.constellationDaysCount.textContent = `${totalUnlocked} of ${totalCatalog} Constellations Shining 🌟`;
     }
 
-    // Monoceros Unicorn Constellation Shape!
-    const starCoords = [
-      { x: w * 0.22, y: h * 0.22 }, // Horn tip
-      { x: w * 0.35, y: h * 0.32 }, // Head
-      { x: w * 0.48, y: h * 0.40 }, // Neck
-      { x: w * 0.62, y: h * 0.42 }, // Back
-      { x: w * 0.78, y: h * 0.38 }, // Tail
-      { x: w * 0.42, y: h * 0.65 }, // Front leg
-      { x: w * 0.72, y: h * 0.72 }, // Back leg
-      { x: w * 0.30, y: h * 0.55 },
-      { x: w * 0.58, y: h * 0.60 },
-      { x: w * 0.85, y: h * 0.55 },
-      { x: w * 0.20, y: h * 0.78 },
-      { x: w * 0.80, y: h * 0.82 }
-    ];
-
-    const totalLit = Math.min(this.constellationDays, starCoords.length);
-
-    if (totalLit > 1) {
-      ctx.beginPath();
-      ctx.moveTo(starCoords[0].x, starCoords[0].y);
-      for (let i = 1; i < totalLit; i++) {
-        ctx.lineTo(starCoords[i].x, starCoords[i].y);
-      }
-      ctx.strokeStyle = 'rgba(244, 114, 182, 0.8)';
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = '#f472b6';
-      ctx.shadowBlur = 12;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-    }
-
-    starCoords.forEach((pt, idx) => {
-      const isLit = idx < totalLit;
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, isLit ? 7 : 4, 0, Math.PI * 2);
-
-      if (isLit) {
-        ctx.fillStyle = (idx === 0) ? '#00f5d4' : '#ffd166';
-        ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 15;
-        ctx.fill();
-        ctx.shadowBlur = 0;
-
-        ctx.beginPath();
-        ctx.arc(pt.x, pt.y, 11, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 209, 102, 0.4)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      } else {
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        ctx.fill();
-      }
-    });
-
-    this.constellationDaysCount.textContent = `${this.constellationDays} Days Practiced 🌟`;
-    
     const ranks = [
-      { days: 0, title: "🦄 Celestial Apprentice" },
-      { days: 3, title: "🐱 Cosmic Kitten Voyager" },
-      { days: 7, title: "✨ Galaxy Commander" },
-      { days: 14, title: "🪐 Monoceros Unicorn Master" },
-      { days: 30, title: "👑 Legend of the Cosmic Caticorn" }
+      { count: 1, title: "🦄 Celestial Stargazer" },
+      { count: 3, title: "🐱 Cosmic Kitten Voyager" },
+      { count: 6, title: "✨ Galaxy Commander" },
+      { count: 10, title: "🪐 Celestial Constellation Master" },
+      { count: 14, title: "👑 Legend of the Cosmic Firmament" }
     ];
     let userRank = ranks[0].title;
     for (const r of ranks) {
-      if (this.constellationDays >= r.days) userRank = r.title;
+      if (totalUnlocked >= r.count) userRank = r.title;
     }
-    this.currentRankBadge.textContent = userRank;
+    if (this.currentRankBadge) {
+      this.currentRankBadge.textContent = userRank;
+    }
+  }
+
+  setSkyViewMode(mode) {
+    this.skyViewMode = mode;
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+
+    const isSky = mode === 'sky';
+    if (this.skyViewDomeBtn) this.skyViewDomeBtn.classList.toggle('active', isSky);
+    if (this.skyViewCardsBtn) this.skyViewCardsBtn.classList.toggle('active', !isSky);
+    if (this.skyDomeView) this.skyDomeView.classList.toggle('hidden', !isSky);
+    if (this.skyCardsView) this.skyCardsView.classList.toggle('hidden', isSky);
+
+    if (!isSky) {
+      this.renderSkyCardsGrid();
+    } else {
+      this.resizeSkyCanvas();
+      window.constellationManager.drawSkyGallery(this.constellationCanvas);
+    }
+  }
+
+  renderConstellationRibbon() {
+    if (!this.constellationRibbon) return;
+    const mgr = window.constellationManager;
+    this.constellationRibbon.innerHTML = '';
+
+    mgr.catalog.forEach(c => {
+      const isUnlocked = mgr.isUnlocked(c.id);
+      const isSelected = c.id === mgr.selectedId;
+
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.className = `ribbon-item ${isUnlocked ? 'unlocked' : 'locked'} ${isSelected ? 'active' : ''}`;
+      item.dataset.id = c.id;
+      item.innerHTML = `<span>${c.icon}</span> <span>${c.name}</span> <span>${isUnlocked ? '✓' : '🔒'}</span>`;
+
+      item.addEventListener('click', () => {
+        if (window.soundEngine) window.soundEngine.playKeyClick();
+        mgr.selectedId = c.id;
+        mgr.centerOnConstellation(c.id, this.constellationCanvas.width, this.constellationCanvas.height);
+        this.showConstellationSpotlight(c);
+        this.updateRibbonActive(c.id);
+      });
+
+      this.constellationRibbon.appendChild(item);
+    });
+  }
+
+  updateRibbonActive(id) {
+    if (!this.constellationRibbon) return;
+    const items = this.constellationRibbon.querySelectorAll('.ribbon-item');
+    items.forEach(el => {
+      el.classList.toggle('active', el.dataset.id === id);
+    });
+  }
+
+  renderSkyCardsGrid() {
+    if (!this.skyCardsGrid) return;
+    const mgr = window.constellationManager;
+    this.skyCardsGrid.innerHTML = '';
+
+    mgr.catalog.forEach(c => {
+      const isUnlocked = mgr.isUnlocked(c.id);
+
+      const card = document.createElement('div');
+      card.className = `sky-card-item ${isUnlocked ? 'unlocked' : 'locked'}`;
+
+      const thumb = document.createElement('canvas');
+      thumb.className = 'sky-card-thumb';
+      thumb.width = 320;
+      thumb.height = 180;
+      mgr.drawSingleConstellation(thumb, c, isUnlocked ? 1.0 : 0.3, { showStarNames: false });
+
+      const header = document.createElement('div');
+      header.className = 'sky-card-header';
+      header.innerHTML = `<h4 class="sky-card-title">${c.icon} ${c.name} — ${c.english}</h4>`;
+
+      const starInfo = document.createElement('p');
+      starInfo.className = 'sky-card-star';
+      starInfo.textContent = `🌟 ${c.bestStar}`;
+
+      const lore = document.createElement('p');
+      lore.className = 'sky-card-lore';
+      lore.textContent = isUnlocked ? c.lore : "🔒 Complete daily math quests to discover this constellation in your night sky!";
+
+      card.appendChild(thumb);
+      card.appendChild(header);
+      card.appendChild(starInfo);
+      card.appendChild(lore);
+
+      if (isUnlocked) {
+        const focusBtn = document.createElement('button');
+        focusBtn.type = 'button';
+        focusBtn.className = 'pill-btn mini-btn primary-btn';
+        focusBtn.textContent = 'View in Night Sky 🌌';
+        focusBtn.addEventListener('click', () => {
+          this.setSkyViewMode('sky');
+          mgr.selectedId = c.id;
+          mgr.centerOnConstellation(c.id, this.constellationCanvas.width, this.constellationCanvas.height);
+          this.showConstellationSpotlight(c);
+          this.updateRibbonActive(c.id);
+        });
+        card.appendChild(focusBtn);
+      }
+
+      this.skyCardsGrid.appendChild(card);
+    });
+  }
+
+  showConstellationSpotlight(constellation) {
+    if (!this.skyConstellationSpotlight || !constellation) return;
+    const mgr = window.constellationManager;
+    const isUnlocked = mgr.isUnlocked(constellation.id);
+
+    if (this.spotlightIcon) this.spotlightIcon.textContent = constellation.icon;
+    if (this.spotlightTitle) this.spotlightTitle.textContent = constellation.name;
+    if (this.spotlightEnglish) this.spotlightEnglish.textContent = constellation.english;
+    if (this.spotlightStar) this.spotlightStar.textContent = `🌟 Key Star: ${constellation.bestStar}`;
+    if (this.spotlightLore) {
+      this.spotlightLore.textContent = isUnlocked
+        ? constellation.lore
+        : "🔒 Practice math quests to light up this constellation in your personal sky!";
+    }
+    if (this.spotlightStatus) {
+      this.spotlightStatus.textContent = isUnlocked ? "✨ Shining in Sky" : "🔒 Awaiting Discovery";
+    }
+
+    this.skyConstellationSpotlight.classList.remove('hidden');
+  }
+
+  hideConstellationSpotlight() {
+    if (this.skyConstellationSpotlight) {
+      this.skyConstellationSpotlight.classList.add('hidden');
+    }
+  }
+
+  centerCurrentSpotlight() {
+    const mgr = window.constellationManager;
+    const c = mgr.getConstellation(mgr.selectedId);
+    if (c) {
+      mgr.centerOnConstellation(c.id, this.constellationCanvas.width, this.constellationCanvas.height);
+      if (window.soundEngine) window.soundEngine.playConstellationStar(2);
+    }
+  }
+
+  zoomSky(delta) {
+    const mgr = window.constellationManager;
+    mgr.zoom = Math.max(0.65, Math.min(2.4, mgr.zoom + delta));
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+  }
+
+  resetSky() {
+    const mgr = window.constellationManager;
+    mgr.resetSkyView();
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+  }
+
+  async saveSkySnapshot() {
+    if (!window.constellationManager) return;
+    if (window.soundEngine) window.soundEngine.playKeyClick();
+    const name = playerName() || 'Player';
+    const saved = await window.constellationManager.saveSkySnapshot(name);
+    if (saved && window.easterEggs) {
+      window.easterEggs.showMascotMessage('💾 Night Sky image saved! Show it off, {name}! 🌌', 3200);
+      window.easterEggs.burstConfetti(60, ['#00f5d4', '#ffd166', '#f472b6']);
+    }
   }
 
   // =========================================================================

@@ -257,6 +257,64 @@ class SoundEngine {
       this.partyLoopTimer = null;
     }
   }
+
+  // Sparkling celestial bell for lighting a constellation star
+  playConstellationStar(step = 0) {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const pentatonic = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.50, 1174.66, 1318.51];
+      const freq = pentatonic[step % pentatonic.length] || 523.25;
+
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0.24, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } catch (e) {}
+  }
+
+  // Grand celestial sparkle fanfare when a constellation is forged
+  playConstellationComplete() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const arpeggio = [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98, 2093.0];
+
+      arpeggio.forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        const start = now + idx * 0.07;
+        osc.frequency.setValueAtTime(freq, start);
+
+        gain.gain.setValueAtTime(0.2, start);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.45);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(start);
+        osc.stop(start + 0.45);
+      });
+    } catch (e) {}
+  }
 }
 
 window.soundEngine = new SoundEngine();

@@ -292,28 +292,66 @@
     <div class="modal-backdrop hidden" id="celebrationModal" role="dialog" aria-modal="true">
       <div class="modal-card celebration-card">
         <div class="celebration-mascot-jump" id="celebMascots">🐯🏆🎮</div>
-        <h2 class="celebration-title">QUEST CLEARED, LYRA! 🏆</h2>
+        <h2 class="celebration-title" id="celebMainTitle">QUEST CLEARED, LYRA! 🏆</h2>
         <p class="celebration-subtitle" id="celebSubtitle">You beat today's 5-minute math quest!</p>
 
-        <!-- Today's one-of-a-kind Quest Badge with full report -->
-        <div class="badge-frame">
-          <canvas id="badgeCanvas" class="badge-canvas" role="img" aria-label="Your quest badge"></canvas>
+        <!-- View Switcher: Constellation Forge vs Quest Badge Report -->
+        <div class="celeb-tab-bar" role="tablist">
+          <button class="celeb-tab-btn active" id="celebTabConstellationBtn" type="button" role="tab" aria-selected="true">
+            🌌 New Constellation
+          </button>
+          <button class="celeb-tab-btn" id="celebTabBadgeBtn" type="button" role="tab" aria-selected="false">
+            🏅 Quest Badge
+          </button>
         </div>
 
-        <div class="constellation-reward-preview">
-          <p>✨ Level complete! A new star lit up on your Sky Map!</p>
+        <!-- Panel 1: Meaningful Constellation Forge Reveal -->
+        <div id="celebConstellationPanel" class="celeb-panel">
+          <div class="constellation-forged-banner">
+            <span class="forged-sparkle">✨</span>
+            <span class="forged-heading" id="celebForgedHeading">CONSTELLATION FORGED!</span>
+            <span class="forged-sparkle">✨</span>
+          </div>
+
+          <div class="badge-frame constellation-forge-frame">
+            <canvas id="celebConstellationCanvas" width="480" height="280" role="img" aria-label="Newly forged constellation"></canvas>
+          </div>
+
+          <div class="constellation-reward-preview">
+            <h4 id="celebConstellationTitle" class="celeb-const-title">🎵 LYRA — The Celestial Harp</h4>
+            <p id="celebConstellationBestStar" class="celeb-const-star">🌟 Key Star: Vega (Sapphire blue super-star)</p>
+            <p id="celebConstellationLore" class="celeb-const-lore">Vega in Lyra is one of the brightest jewels in the night sky! 14,000 years ago it was Earth's North Star.</p>
+          </div>
+
+          <div class="celebration-actions">
+            <button id="viewConstellationFromCelebBtn" class="pill-btn primary-btn pulse-glow" type="button">
+              🌌 Go to Sky Gallery
+            </button>
+            <button id="viewBadgeReportFromCelebBtn" class="pill-btn secondary-btn" type="button">
+              🏅 View Math Quest Badge
+            </button>
+            <button id="keepPracticingBtn" class="pill-btn secondary-btn" type="button">
+              🎮 Bonus Round: Keep Playing!
+            </button>
+          </div>
         </div>
 
-        <div class="celebration-actions">
-          <button id="saveBadgeBtn" class="pill-btn primary-btn">
-            💾 Save My Badge
-          </button>
-          <button id="viewConstellationFromCelebBtn" class="pill-btn secondary-btn">
-            🌌 See My Sky Map
-          </button>
-          <button id="keepPracticingBtn" class="pill-btn secondary-btn">
-            🎮 Bonus Round: Keep Playing!
-          </button>
+        <!-- Panel 2: Today's one-of-a-kind Quest Badge with full report -->
+        <div id="celebBadgePanel" class="celeb-panel hidden">
+          <div class="badge-frame">
+            <canvas id="badgeCanvas" class="badge-canvas" role="img" aria-label="Your quest badge"></canvas>
+          </div>
+          <div class="celebration-actions">
+            <button id="saveBadgeBtn" class="pill-btn primary-btn" type="button">
+              💾 Save My Badge
+            </button>
+            <button id="viewSkyFromBadgeBtn" class="pill-btn secondary-btn" type="button">
+              🌌 Go to Sky Gallery
+            </button>
+            <button id="backToConstellationBtn" class="pill-btn secondary-btn" type="button">
+              ← Back to Constellation
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -367,22 +405,74 @@
       </div>
     </div>
 
-    <!-- Constellation Sky Modal -->
+    <!-- Constellation Sky Gallery Modal: Interactive Celestial Firmament & Codex -->
     <div class="modal-backdrop hidden" id="constellationModal" role="dialog" aria-modal="true">
-      <div class="modal-card constellation-card">
+      <div class="modal-card constellation-card sky-gallery-card">
         <div class="modal-header">
-          <h3>🌌 <span class="player-name">Player</span>'s Night Sky Constellation</h3>
-          <button class="modal-close-btn" id="closeConstellationBtn" aria-label="Close constellation">✕</button>
+          <div class="sky-gallery-header-left">
+            <h3>🌌 <span class="player-name">Player</span>'s Celestial Sky Gallery</h3>
+            <span class="sky-badge-count" id="skyConstellationCount">✨ 1 of 14 Constellations Present</span>
+          </div>
+          <button class="modal-close-btn" id="closeConstellationBtn" aria-label="Close celestial sky">✕</button>
         </div>
-        <p class="constellation-intro">Every day you practice for 5 minutes, a new star glows in your sky map!</p>
-        
-        <div class="constellation-sky-container">
-          <canvas id="constellationCanvas" width="480" height="300"></canvas>
+
+        <!-- Sky Toolbar: View Switcher, Zoom, Reset & Snapshot -->
+        <div class="sky-toolbar">
+          <div class="sky-view-toggle">
+            <button id="skyViewDomeBtn" class="sky-tool-btn active" type="button" title="Panoramic Night Sky">
+              🌌 Night Sky
+            </button>
+            <button id="skyViewCardsBtn" class="sky-tool-btn" type="button" title="Constellation Cards Grid">
+              🎴 Cards Codex
+            </button>
+          </div>
+          <div class="sky-controls">
+            <button id="skyZoomInBtn" class="sky-icon-btn" type="button" title="Zoom in" aria-label="Zoom in">➕</button>
+            <button id="skyZoomOutBtn" class="sky-icon-btn" type="button" title="Zoom out" aria-label="Zoom out">➖</button>
+            <button id="skyResetBtn" class="sky-icon-btn" type="button" title="Reset sky view" aria-label="Reset view">🎯</button>
+            <button id="saveSkySnapshotBtn" class="sky-tool-btn secondary" type="button" title="Save Personal Sky Image">💾 Save Sky Picture</button>
+          </div>
+        </div>
+
+        <!-- View 1: Panoramic Night Sky Dome with All Present Constellations -->
+        <div id="skyDomeView" class="sky-dome-view">
+          <div class="constellation-sky-container" id="skyCanvasContainer">
+            <canvas id="constellationCanvas" width="920" height="520" role="img" aria-label="Celestial night sky map"></canvas>
+
+            <!-- Spotlight Card Overlay: Appears when a constellation is tapped/clicked in the sky -->
+            <div id="skyConstellationSpotlight" class="sky-spotlight-overlay hidden">
+              <div class="spotlight-header">
+                <span id="spotlightIcon" class="spotlight-icon">🎵</span>
+                <div class="spotlight-title-group">
+                  <h4 id="spotlightTitle">Lyra</h4>
+                  <span id="spotlightEnglish" class="spotlight-english">The Celestial Harp</span>
+                </div>
+                <button id="closeSpotlightBtn" class="spotlight-close-btn" type="button" aria-label="Dismiss spotlight">✕</button>
+              </div>
+              <p id="spotlightStar" class="spotlight-star">🌟 Key Star: Vega (Sapphire blue super-star)</p>
+              <p id="spotlightLore" class="spotlight-lore">Vega in Lyra is one of the brightest jewels in the night sky!</p>
+              <div class="spotlight-footer">
+                <span id="spotlightStatus" class="spotlight-status">✨ Shining in Sky</span>
+                <button id="centerSpotlightBtn" class="pill-btn mini-btn primary-btn" type="button">Focus Constellation 🎯</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Constellation Quick-Jump Ribbon -->
+          <div class="constellation-ribbon-container">
+            <span class="ribbon-label">Constellations in Your Sky:</span>
+            <div class="constellation-ribbon" id="constellationRibbon"></div>
+          </div>
+        </div>
+
+        <!-- View 2: Constellation Cards Codex Grid -->
+        <div id="skyCardsView" class="sky-cards-view hidden">
+          <div class="sky-cards-grid" id="skyCardsGrid"></div>
         </div>
 
         <div class="constellation-footer-info">
-          <span id="constellationDaysCount">3 of 30 Stars Lit</span>
-          <span class="constellation-badge" id="currentRankBadge">🦄 Celestial Unicorn Champion</span>
+          <span id="constellationDaysCount">1 of 14 Constellations Shining 🌟</span>
+          <span class="constellation-badge" id="currentRankBadge">🦄 Celestial Apprentice</span>
         </div>
       </div>
     </div>
@@ -494,6 +584,13 @@
             </select>
           </div>
 
+          <div class="setting-section-title">Constellation & Quest Testing:</div>
+          <div class="setting-row">
+            <button id="testCompleteQuestBtn" class="pill-btn secondary-btn" type="button" style="width: 100%;">
+              🌟 Test Quest Completion & Constellation Reveal
+            </button>
+          </div>
+
           <div class="setting-section-title">Progress Reset:</div>
           <div class="danger-zone">
             <button id="resetTodayBtn" class="pill-btn danger-outline-btn">Reset Today's Timer</button>
@@ -513,6 +610,7 @@
   <script src="js/math-engine.js"></script>
   <script src="js/easter-eggs.js"></script>
   <script src="js/badge.js"></script>
+  <script src="js/constellations.js"></script>
   <script src="js/app.js"></script>
 
   <!-- PWA Service Worker Registration -->

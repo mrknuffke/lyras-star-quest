@@ -30,7 +30,10 @@ class EasterEggController {
       'rainbow': () => this.burstConfetti(100, ['#ff4d8d', '#ff9a00', '#ffd100', '#06d6a0', '#00f5d4', '#7209b7']),
       'party': () => this.triggerPartyMode(),
       'galaxy': () => this.triggerGalaxyShower(),
-      'star': () => this.burstConfetti(80)
+      'star': () => this.burstConfetti(80),
+      'finish': () => { if (window.starQuestApp) window.starQuestApp.completeDailyQuest(); },
+      'sky': () => { if (window.starQuestApp) window.starQuestApp.openConstellationModal(); },
+      'constellation': () => { if (window.starQuestApp) window.starQuestApp.openConstellationModal(); }
     };
 
     // 35+ diverse, gentle, warm, buddy-specific growth mindset encouragements
