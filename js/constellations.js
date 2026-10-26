@@ -20,14 +20,15 @@ const CONSTELLATIONS_CATALOG = [
     skyScale: 0.22,
     stars: [
       { x: 0.48, y: 0.15, name: 'Vega', mag: 1.0, primary: true, color: '#93c5fd' },
-      { x: 0.70, y: 0.22, name: 'Epsilon Lyrae', mag: 0.6, color: '#ffffff' },
-      { x: 0.38, y: 0.38, name: 'Zeta Lyrae', mag: 0.6, color: '#bae6fd' },
-      { x: 0.60, y: 0.44, name: 'Delta Lyrae', mag: 0.6, color: '#fef08a' },
-      { x: 0.32, y: 0.80, name: 'Sheliak', mag: 0.7, color: '#e0f2fe' },
-      { x: 0.56, y: 0.84, name: 'Sulafat', mag: 0.7, color: '#e0f2fe' }
+      { x: 0.68, y: 0.26, name: 'Epsilon Lyrae', mag: 0.6, color: '#ffffff' },
+      { x: 0.38, y: 0.36, name: 'Zeta Lyrae', mag: 0.6, color: '#bae6fd' },
+      { x: 0.64, y: 0.46, name: 'Delta Lyrae', mag: 0.6, color: '#fef08a' },
+      { x: 0.34, y: 0.82, name: 'Sheliak', mag: 0.7, color: '#e0f2fe' },
+      { x: 0.60, y: 0.86, name: 'Sulafat', mag: 0.7, color: '#e0f2fe' }
     ],
     lines: [
-      [0, 1], [0, 2], [2, 3], [3, 1], [2, 4], [3, 5], [4, 5]
+      [0, 1], [0, 2], [1, 2],
+      [1, 3], [2, 3], [3, 5], [5, 4], [4, 2]
     ]
   },
   {
@@ -50,14 +51,16 @@ const CONSTELLATIONS_CATALOG = [
       { x: 0.32, y: 0.35, name: 'Alioth', mag: 0.8, color: '#ffffff' },
       { x: 0.20, y: 0.28, name: 'Mizar', mag: 0.8, color: '#bae6fd' },
       { x: 0.08, y: 0.32, name: 'Alkaid', mag: 0.8, color: '#93c5fd' },
-      { x: 0.86, y: 0.22, name: 'Muscida', mag: 0.5, color: '#ffffff' },
+      { x: 0.86, y: 0.24, name: 'Muscida', mag: 0.6, color: '#ffffff' },
       { x: 0.80, y: 0.78, name: 'Tania', mag: 0.5, color: '#ffffff' },
-      { x: 0.74, y: 0.90, name: 'Talitha', mag: 0.5, color: '#ffffff' },
-      { x: 0.38, y: 0.90, name: 'Alula', mag: 0.5, color: '#ffffff' }
+      { x: 0.82, y: 0.48, name: 'Talitha', mag: 0.6, color: '#ffffff' },
+      { x: 0.36, y: 0.88, name: 'Alula', mag: 0.5, color: '#ffffff' }
     ],
     lines: [
-      [0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 5], [5, 6],
-      [0, 7], [3, 7], [1, 8], [8, 9], [2, 10]
+      [6, 5], [5, 4], [4, 3],
+      [3, 0], [0, 1], [1, 2], [2, 3],
+      [0, 7], [3, 7], [7, 9],
+      [1, 8], [2, 10]
     ]
   },
   {
@@ -68,7 +71,7 @@ const CONSTELLATIONS_CATALOG = [
     color: '#f472b6',
     glowColor: '#db2777',
     bestStar: 'Betelgeuse & Rigel',
-    lore: "Betelgeuse is a glowing red supergiant so vast that 1,000 suns could fit across it! Across from it shines Rigel, a brilliant diamond-blue super-star.",
+    lore: "Betelgeuse is a glowing red supergiant so vast that 1,000 suns could fit across it! Across from it shines Rigel, with the glowing stellar nursery of Orion's Sword hanging from his belt.",
     skyX: 0.50,
     skyY: 0.68,
     skyScale: 0.26,
@@ -82,13 +85,19 @@ const CONSTELLATIONS_CATALOG = [
       { x: 0.32, y: 0.82, name: 'Saiph', mag: 0.8, color: '#ffffff' },
       { x: 0.70, y: 0.80, name: 'Rigel', mag: 1.0, primary: true, color: '#93c5fd' },
       { x: 0.88, y: 0.34, name: 'Tabit', mag: 0.5, color: '#ffffff' },
-      { x: 0.86, y: 0.50, name: 'Shield', mag: 0.5, color: '#ffffff' },
-      { x: 0.20, y: 0.06, name: 'Club', mag: 0.5, color: '#ffffff' }
+      { x: 0.86, y: 0.50, name: 'Pi Orionis', mag: 0.5, color: '#ffffff' },
+      { x: 0.20, y: 0.06, name: 'Chi Orionis', mag: 0.5, color: '#ffffff' },
+      { x: 0.49, y: 0.56, name: 'Theta Ori (M42)', mag: 0.7, primary: true, color: '#f472b6' },
+      { x: 0.48, y: 0.64, name: 'Hatysa', mag: 0.6, color: '#bae6fd' }
     ],
     lines: [
-      [0, 2], [2, 1], [0, 10], [0, 3], [1, 5],
+      [0, 2], [2, 1], [0, 1],
+      [0, 10],
+      [0, 3], [1, 5],
       [3, 4], [4, 5],
-      [3, 6], [5, 7], [1, 8], [8, 9]
+      [4, 11], [11, 12],
+      [3, 6], [5, 7], [6, 7],
+      [1, 8], [8, 9]
     ]
   },
   {
@@ -104,15 +113,14 @@ const CONSTELLATIONS_CATALOG = [
     skyY: 0.18,
     skyScale: 0.22,
     stars: [
-      { x: 0.12, y: 0.60, name: 'Caph', mag: 0.8, color: '#fef08a' },
+      { x: 0.12, y: 0.56, name: 'Caph', mag: 0.8, color: '#fef08a' },
       { x: 0.32, y: 0.72, name: 'Schedar', mag: 0.9, primary: true, color: '#fed7aa' },
       { x: 0.50, y: 0.38, name: 'Navi', mag: 0.9, color: '#93c5fd' },
       { x: 0.72, y: 0.62, name: 'Ruchbah', mag: 0.8, color: '#ffffff' },
-      { x: 0.88, y: 0.32, name: 'Segin', mag: 0.7, color: '#ffffff' },
-      { x: 0.42, y: 0.88, name: 'Achird', mag: 0.5, color: '#fed7aa' }
+      { x: 0.88, y: 0.34, name: 'Segin', mag: 0.7, color: '#ffffff' }
     ],
     lines: [
-      [0, 1], [1, 2], [2, 3], [3, 4], [1, 5]
+      [0, 1], [1, 2], [2, 3], [3, 4]
     ]
   },
   {
@@ -132,9 +140,9 @@ const CONSTELLATIONS_CATALOG = [
       { x: 0.50, y: 0.45, name: 'Sadr', mag: 0.8, color: '#fef08a' },
       { x: 0.50, y: 0.88, name: 'Albireo', mag: 0.8, primary: true, color: '#fbbf24' },
       { x: 0.20, y: 0.38, name: 'Gienah', mag: 0.8, color: '#ffffff' },
-      { x: 0.06, y: 0.28, name: 'Wingtip L', mag: 0.6, color: '#bae6fd' },
+      { x: 0.06, y: 0.28, name: 'Zeta Cygni', mag: 0.6, color: '#bae6fd' },
       { x: 0.80, y: 0.40, name: 'Fawaris', mag: 0.8, color: '#ffffff' },
-      { x: 0.94, y: 0.32, name: 'Wingtip R', mag: 0.6, color: '#bae6fd' }
+      { x: 0.94, y: 0.32, name: 'Iota Cygni', mag: 0.6, color: '#bae6fd' }
     ],
     lines: [
       [0, 1], [1, 2], [4, 3], [3, 1], [1, 5], [5, 6]
@@ -164,8 +172,8 @@ const CONSTELLATIONS_CATALOG = [
       { x: 0.90, y: 0.48, name: 'Denebola', mag: 0.8, color: '#93c5fd' }
     ],
     lines: [
-      [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 2],
-      [2, 6], [6, 8], [8, 7], [7, 0]
+      [0, 1], [1, 2], [2, 3], [3, 4], [4, 5],
+      [2, 6], [6, 8], [8, 7], [7, 6], [7, 0]
     ]
   },
   {
@@ -189,7 +197,7 @@ const CONSTELLATIONS_CATALOG = [
       { x: 0.12, y: 0.40, name: 'Biham', mag: 0.6, color: '#ffffff' },
       { x: 0.04, y: 0.28, name: 'Enif', mag: 0.8, color: '#fed7aa' },
       { x: 0.25, y: 0.16, name: 'Matar', mag: 0.6, color: '#ffffff' },
-      { x: 0.15, y: 0.06, name: 'Hoof', mag: 0.5, color: '#ffffff' }
+      { x: 0.15, y: 0.06, name: 'Pi Pegasi', mag: 0.5, color: '#ffffff' }
     ],
     lines: [
       [0, 1], [1, 2], [2, 3], [3, 0],
@@ -235,15 +243,15 @@ const CONSTELLATIONS_CATALOG = [
     skyY: 0.70,
     skyScale: 0.22,
     stars: [
-      { x: 0.48, y: 0.08, name: 'Horn Tip', mag: 0.8, primary: true, color: '#fed7aa' },
-      { x: 0.52, y: 0.26, name: 'Forehead', mag: 0.7, color: '#ffffff' },
+      { x: 0.48, y: 0.08, name: 'S Monocerotis', mag: 0.8, primary: true, color: '#fed7aa' },
+      { x: 0.52, y: 0.26, name: 'Epsilon Mon', mag: 0.7, color: '#ffffff' },
       { x: 0.44, y: 0.44, name: 'Alpha Mon', mag: 0.7, color: '#fed7aa' },
       { x: 0.28, y: 0.60, name: 'Beta Mon', mag: 0.9, color: '#bae6fd' },
-      { x: 0.18, y: 0.86, name: 'Front Hoof', mag: 0.6, color: '#ffffff' },
+      { x: 0.18, y: 0.86, name: 'Delta Mon', mag: 0.6, color: '#ffffff' },
       { x: 0.66, y: 0.50, name: 'Gamma Mon', mag: 0.7, color: '#fed7aa' },
-      { x: 0.80, y: 0.64, name: 'Flank', mag: 0.6, color: '#ffffff' },
-      { x: 0.72, y: 0.88, name: 'Back Hoof', mag: 0.6, color: '#ffffff' },
-      { x: 0.92, y: 0.58, name: 'Tail Tip', mag: 0.6, color: '#f472b6' }
+      { x: 0.80, y: 0.64, name: 'Zeta Mon', mag: 0.6, color: '#ffffff' },
+      { x: 0.72, y: 0.88, name: '13 Monocerotis', mag: 0.6, color: '#ffffff' },
+      { x: 0.92, y: 0.58, name: "Plaskett's Star", mag: 0.6, color: '#f472b6' }
     ],
     lines: [
       [0, 1], [1, 2], [2, 3], [2, 5], [5, 6], [6, 8],
@@ -268,12 +276,12 @@ const CONSTELLATIONS_CATALOG = [
       { x: 0.34, y: 0.42, name: 'Hyadum', mag: 0.7, color: '#ffffff' },
       { x: 0.74, y: 0.16, name: 'Elnath', mag: 0.8, color: '#93c5fd' },
       { x: 0.70, y: 0.46, name: 'Tianguan', mag: 0.7, color: '#ffffff' },
-      { x: 0.14, y: 0.24, name: 'Pleiades', mag: 0.9, color: '#bae6fd' },
-      { x: 0.28, y: 0.66, name: 'Chest', mag: 0.6, color: '#ffffff' },
-      { x: 0.18, y: 0.86, name: 'Hoof', mag: 0.5, color: '#ffffff' }
+      { x: 0.14, y: 0.24, name: 'Pleiades (M45)', mag: 0.9, color: '#bae6fd' },
+      { x: 0.28, y: 0.66, name: 'Lambda Tauri', mag: 0.6, color: '#ffffff' },
+      { x: 0.18, y: 0.86, name: 'Xi Tauri', mag: 0.5, color: '#ffffff' }
     ],
     lines: [
-      [2, 0], [0, 1], [1, 2], [1, 3], [0, 4], [0, 6], [6, 7]
+      [2, 0], [0, 1], [1, 2], [1, 3], [0, 4], [0, 6], [6, 7], [6, 5]
     ]
   },
   {
@@ -290,12 +298,12 @@ const CONSTELLATIONS_CATALOG = [
     skyScale: 0.20,
     stars: [
       { x: 0.15, y: 0.20, name: 'Polaris', mag: 1.1, primary: true, color: '#ffffff' },
-      { x: 0.30, y: 0.32, name: 'Yildun', mag: 0.6, color: '#ffffff' },
-      { x: 0.44, y: 0.38, name: 'Urodelus', mag: 0.6, color: '#ffffff' },
-      { x: 0.58, y: 0.44, name: 'Ahfa', mag: 0.6, color: '#ffffff' },
-      { x: 0.70, y: 0.34, name: 'Pherkad', mag: 0.7, color: '#bae6fd' },
-      { x: 0.84, y: 0.50, name: 'Kochab', mag: 0.9, primary: true, color: '#fed7aa' },
-      { x: 0.70, y: 0.62, name: 'Anwar', mag: 0.6, color: '#ffffff' }
+      { x: 0.30, y: 0.30, name: 'Yildun', mag: 0.6, color: '#ffffff' },
+      { x: 0.44, y: 0.36, name: 'Urodelus', mag: 0.6, color: '#ffffff' },
+      { x: 0.58, y: 0.42, name: 'Ahfa', mag: 0.6, color: '#ffffff' },
+      { x: 0.76, y: 0.34, name: 'Pherkad', mag: 0.7, color: '#bae6fd' },
+      { x: 0.82, y: 0.56, name: 'Kochab', mag: 0.9, primary: true, color: '#fed7aa' },
+      { x: 0.64, y: 0.62, name: 'Anwar', mag: 0.6, color: '#ffffff' }
     ],
     lines: [
       [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 3]
@@ -315,13 +323,13 @@ const CONSTELLATIONS_CATALOG = [
     skyScale: 0.22,
     stars: [
       { x: 0.50, y: 0.16, name: 'Ankaa', mag: 1.0, primary: true, color: '#fed7aa' },
-      { x: 0.50, y: 0.44, name: 'Heart', mag: 0.7, color: '#fef08a' },
-      { x: 0.12, y: 0.30, name: 'Wingtip L', mag: 0.7, color: '#fca5a5' },
-      { x: 0.30, y: 0.40, name: 'Joint L', mag: 0.6, color: '#ffffff' },
-      { x: 0.88, y: 0.30, name: 'Wingtip R', mag: 0.7, color: '#fca5a5' },
-      { x: 0.70, y: 0.40, name: 'Joint R', mag: 0.6, color: '#ffffff' },
-      { x: 0.40, y: 0.86, name: 'Tail L', mag: 0.6, color: '#fca5a5' },
-      { x: 0.60, y: 0.86, name: 'Tail R', mag: 0.6, color: '#fca5a5' }
+      { x: 0.50, y: 0.44, name: 'Beta Phoenicis', mag: 0.7, color: '#fef08a' },
+      { x: 0.12, y: 0.30, name: 'Wurren', mag: 0.7, color: '#fca5a5' },
+      { x: 0.30, y: 0.40, name: 'Gamma Phoenicis', mag: 0.6, color: '#ffffff' },
+      { x: 0.88, y: 0.30, name: 'Epsilon Phoenicis', mag: 0.7, color: '#fca5a5' },
+      { x: 0.70, y: 0.40, name: 'Delta Phoenicis', mag: 0.6, color: '#ffffff' },
+      { x: 0.40, y: 0.86, name: 'Eta Phoenicis', mag: 0.6, color: '#fca5a5' },
+      { x: 0.60, y: 0.86, name: 'Psi Phoenicis', mag: 0.6, color: '#fca5a5' }
     ],
     lines: [
       [0, 1], [2, 3], [3, 1], [1, 5], [5, 4], [1, 6], [1, 7]
@@ -374,7 +382,7 @@ const CONSTELLATIONS_CATALOG = [
       { x: 0.62, y: 0.50, name: 'Delta Del', mag: 0.7, color: '#ffffff' },
       { x: 0.44, y: 0.54, name: 'Gamma Del', mag: 0.7, color: '#fed7aa' },
       { x: 0.30, y: 0.74, name: 'Deneb Dulfim', mag: 0.7, color: '#ffffff' },
-      { x: 0.16, y: 0.86, name: 'Fluke', mag: 0.5, color: '#bae6fd' }
+      { x: 0.16, y: 0.86, name: 'Zeta Delphini', mag: 0.5, color: '#bae6fd' }
     ],
     lines: [
       [0, 1], [1, 2], [2, 3], [3, 0],
